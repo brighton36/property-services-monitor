@@ -1,0 +1,9 @@
+# Start with the yaml:
+https://github.com/jbeder/yaml-cpp
+
+# Send email: https://github.com/karastojko/mailio
+
+#template: https://github.com/pantor/inja
+
+Perhaps: https://github.com/yhirose/cpp-httplib
+

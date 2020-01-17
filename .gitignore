@@ -1,0 +1,7 @@
+*.swp
+*.swo
+*.swm
+*.swn
+*.o
+
+property-services-monitor
