@@ -3,5 +3,7 @@
 *.swm
 *.swn
 *.o
+*.yml
+build/*
 
 property-services-monitor
