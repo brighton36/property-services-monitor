@@ -57,6 +57,12 @@ class MonitorJob {
         throw invalid_argument("Missing services for host"); 
 
       vector<string> services;
+      // TODO: Maybe we want to create service objects here...
+      // https://www.boost.org/doc/libs/1_51_0/doc/html/boost_asio/example/icmp/ping.cpp
+      // libasio-dev
+      // or poco:
+      // https://stackoverflow.com/questions/49371450/why-getting-ioexception-when-pinging-to-rechable-host-using-icmpclient-of-poco-l
+      // libpoconet62
       for (YAML::detail::iterator_value config_service: config_host["services"])
         services.push_back(config_service.as<string>());
 
@@ -93,14 +99,18 @@ int main(int argc, char* argv[]) {
   MonitorJob *job;
 
   try {
-    // TOdo: Let's use our own exceptions
     job = new MonitorJob(argv[1]);
+    job->printtest();
+  } catch(const YAML::Exception& e) {
+    cerr << "YAML Exception: " << e.what() << endl;
+    return 1;
+  } catch(const std::invalid_argument& e) {
+    cerr << "invalid_argument Encountered: " << e.what() << endl;
+    return 1;
   } catch(const exception& e) {
-    cerr << "Exception Encountered: " << e.what() << endl;
+    cerr << "General Exception Encountered: " << e.what() << endl;
     return 1;
   }
-
-  job->printtest();
 
   delete job;
 
