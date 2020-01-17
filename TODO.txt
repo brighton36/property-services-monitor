@@ -1,5 +1,7 @@
-# Start with the yaml:
-https://github.com/jbeder/yaml-cpp
+
+# maybe try this for the services...
+https://www.codeproject.com/Articles/363338/Factory-Pattern-in-Cplusplus
+
 
 # Send email: https://github.com/karastojko/mailio
 

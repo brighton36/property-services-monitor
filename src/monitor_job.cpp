@@ -5,12 +5,6 @@
 
 using namespace std;
 
-MonitorHost::MonitorHost(string label, string address, vector<string> services) {
-	this->label = label;
-	this->address = address;
-	this->services = services;
-}
-
 MonitorJob::MonitorJob(char *szPath) {
 	config_path = string(szPath);
 
@@ -42,32 +36,60 @@ MonitorJob::MonitorJob(char *szPath) {
 		if (config_host["services"].size() < 1) 
 			throw invalid_argument("Missing services for host"); 
 
-		vector<string> services;
-		// TODO: Maybe we want to create service objects here...
-		// Poco:
-		// https://stackoverflow.com/questions/49371450/why-getting-ioexception-when-pinging-to-rechable-host-using-icmpclient-of-poco-l
-		// libpoconet62
-		for (YAML::detail::iterator_value config_service: config_host["services"])
-			services.push_back(config_service.as<string>());
+    string label = config_host["label"].as<string>();
+    string address = config_host["address"].as<string>();
 
-		MonitorHost host = MonitorHost( config_host["label"].as<string>(), 
-			config_host["address"].as<string>(), services );
+		vector<MonitorServiceBase *> services;
+		for (YAML::detail::iterator_value config_service: config_host["services"]) {
+      string service_type = config_service.as<string>();
+      MonitorServiceBase *service;
 
-		hosts.push_back(host);
+      if (service_type == string("ping"))
+        service = new MonitorServicePing(address);
+      else if (service_type == string("web"))
+        service = new MonitorServiceWeb(address);
+      else
+        throw invalid_argument("Invalid service encountered."); 
+
+			services.push_back(service);
+    }
+
+		hosts.push_back(new MonitorHost( label, address, services ));
 	}
 }	
+
+MonitorJob::~MonitorJob() {
+	for (MonitorHost *host: hosts)
+    delete host;
+}
 
 // Maybe we can do an eachHost() thing, passing the host and services to the iterator
 // that would be useful in the destructor too
 void MonitorJob::printtest() { 
 	cout << "To  :" << to << endl << "From:" << from << endl;
 
-	for (MonitorHost host: hosts) {
-		cout << "  * host: " << host.label << " - " << host.address << endl;
+	for (MonitorHost *host: hosts) {
+		cout << "  * host: " << host->label << " - " << host->address << endl;
 		cout << "  * Services:" << endl;
 
-		for(string service: host.services)
-			cout << "    * " << service << endl;
+		for(MonitorServiceBase *service: host->services) {
+			cout << "    * " << service->type << endl;
+      if (service->type == string("ping")) {
+        MonitorServicePing * service_ping = (MonitorServicePing *)service;
+        service_ping->IsAvailable();
+      }
+		}
 	}
 } 
+
+MonitorHost::MonitorHost(string label, string address, vector<MonitorServiceBase *> services) {
+	this->label = label;
+	this->address = address;
+	this->services = services;
+}
+
+MonitorHost::~MonitorHost() {
+  for(MonitorServiceBase *service: services)
+    delete service;
+}
 

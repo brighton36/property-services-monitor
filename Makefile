@@ -1,16 +1,3 @@
-#CXX=g++
-#CFLAGS=-I. -I./include
-
-#monitor_job.o: 
-	#$(CXX) -o property-services-monitor property-services-monitor.o -lyaml-cpp
-#property-services-monitor: property-services-monitor.o 
-	#$(CXX) -o property-services-monitor property-services-monitor.o monitor_job.o
-
-#.PHONY: clean
-
-#clean:
-	#rm -f *.o property-services-monitor
-	
 CXX ?= g++
 
 SRC_PATH = ./src
@@ -26,7 +13,7 @@ DEPS = $(OBJECTS:.o=.d)
 # flags #
 COMPILE_FLAGS = -std=c++11 -Wall -Wextra -g
 INCLUDES = -I./include/ 
-LIBS = -lyaml-cpp
+LIBS = -lyaml-cpp -lPocoNet -lPocoFoundation
 
 .PHONY: default_target
 default_target: release
@@ -60,7 +47,7 @@ all: $(BIN_PATH)/$(BIN_NAME)
 # Creation of the executable
 $(BIN_PATH)/$(BIN_NAME): $(OBJECTS)
 	@echo "Linking: $@"
-	$(CXX) $(OBJECTS)  $(LIBS) -o $@
+	$(CXX) $(OBJECTS) $(LIBS) -o $@
 
 # Add dependency files, if they exist
 -include $(DEPS)
