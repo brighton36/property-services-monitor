@@ -27,6 +27,11 @@ MonitorServicePing::MonitorServicePing(string address)
 
 }
 
+#ifdef __GNUC__
+#define UNUSED __attribute((unused))
+#else
+#define UNUSED
+#endif
 
 class PingExample {
 	public:
@@ -43,24 +48,24 @@ class PingExample {
 	}
 
 
-	void onBegin(const void* pSender, ICMPEventArgs& args) {
+	void onBegin(const void* pSender UNUSED, ICMPEventArgs& args) {
 		std::cout << "Pinging " << args.hostName() << " [" 
 		<< args.hostAddress() << "] with " << args.dataSize() << " bytes of data:" 
 		<< std::endl << "---------------------------------------------" << std::endl;
 	}
 
-	void onReply(const void* pSender, ICMPEventArgs& args) {
+	void onReply(const void* pSender UNUSED, ICMPEventArgs& args) {
 		std::cout << "Reply from " << args.hostAddress()
 			<< " bytes=" << args.dataSize() 
 			<< " time=" << args.replyTime() << "ms"
 			<< " TTL=" << args.ttl();
 	}
 
-	void onError(const void* pSender, ICMPEventArgs& args) {
+	void onError(const void* pSender UNUSED, ICMPEventArgs& args) {
 		std::cout << args.error();
 	}
 
-	void onEnd(const void* pSender, ICMPEventArgs& args) {
+	void onEnd(const void* pSender UNUSED, ICMPEventArgs& args) {
 		std::cout << std::endl << "--- Ping statistics for " << args.hostName() << " ---"
 		<< std::endl << "Packets: Sent=" << args.sent() << ", Received=" << args.received()
 		<< " Lost=" << args.repetitions() - args.received() << " (" << 100.0 - args.percent() << "% loss),"

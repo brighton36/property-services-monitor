@@ -1,6 +1,6 @@
 
 # maybe try this for the services...
-https://www.codeproject.com/Articles/363338/Factory-Pattern-in-Cplusplus
+  https://www.programiz.com/cpp-programming/templates
 
 
 # Send email: https://github.com/karastojko/mailio
