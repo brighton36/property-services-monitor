@@ -15,8 +15,20 @@ MonitorServiceBase::MonitorServiceBase(string address, string type) {
   this->type = type;
 }
 
+bool MonitorServiceBase::IsAvailable() {
+  cout << "TODO: in base, throw error?" << endl;
+  return false;}
+
+MonitorServiceBase::~MonitorServiceBase() {
+  cout << "~MonitorServiceBase()" << endl;
+}
+
 MonitorServiceWeb::MonitorServiceWeb(string address) 
   : MonitorServiceBase(address, "web") { }
+
+MonitorServiceWeb::~MonitorServiceWeb() {
+  cout << "~MonitorServiceWeb()" << endl;
+}
 
 using Poco::Net::ICMPClient;
 using Poco::Net::IPAddress;
@@ -24,7 +36,10 @@ using Poco::Net::ICMPEventArgs;
 
 MonitorServicePing::MonitorServicePing(string address) 
   : MonitorServiceBase(address, "ping") { 
+}
 
+MonitorServicePing::~MonitorServicePing() {
+  cout << "~MonitorServicePing()" << endl;
 }
 
 #ifdef __GNUC__
@@ -81,7 +96,7 @@ class PingExample {
 
 bool MonitorServicePing::IsAvailable() {
   cout << "Service Ping is available " << endl;
-	PingExample p;
-	p.start_ping("localhost");
+	//PingExample p;
+	//p.start_ping("localhost");
   return false;
 }

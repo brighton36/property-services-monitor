@@ -1,4 +1,5 @@
 #include <iostream>
+#include <memory>
 
 #include "yaml-cpp/yaml.h"
 #include "monitor_job.h"
@@ -39,28 +40,27 @@ MonitorJob::MonitorJob(char *szPath) {
     string label = config_host["label"].as<string>();
     string address = config_host["address"].as<string>();
 
-		vector<MonitorServiceBase *> services;
+		vector<shared_ptr<MonitorServiceBase>> services;
 		for (YAML::detail::iterator_value config_service: config_host["services"]) {
       string service_type = config_service.as<string>();
-      MonitorServiceBase *service;
+      shared_ptr<MonitorServiceBase> service;
 
       if (service_type == string("ping"))
-        service = new MonitorServicePing(address);
+        service = make_shared<MonitorServicePing>(address);
       else if (service_type == string("web"))
-        service = new MonitorServiceWeb(address);
+        service = make_shared<MonitorServiceWeb>(address);
       else
         throw invalid_argument("Invalid service encountered."); 
 
 			services.push_back(service);
     }
 
-		hosts.push_back(new MonitorHost( label, address, services ));
+		hosts.push_back(make_shared<MonitorHost>( label, address, services ));
 	}
 }	
 
 MonitorJob::~MonitorJob() {
-	for (MonitorHost *host: hosts)
-    delete host;
+  cout << "~MonitorJob()" << endl;
 }
 
 // Maybe we can do an eachHost() thing, passing the host and services to the iterator
@@ -68,28 +68,27 @@ MonitorJob::~MonitorJob() {
 void MonitorJob::printtest() { 
 	cout << "To  :" << to << endl << "From:" << from << endl;
 
-	for (MonitorHost *host: hosts) {
+	for (shared_ptr<MonitorHost> host: hosts) {
 		cout << "  * host: " << host->label << " - " << host->address << endl;
 		cout << "  * Services:" << endl;
 
-		for(MonitorServiceBase *service: host->services) {
+		for(shared_ptr<MonitorServiceBase> service: host->services) {
 			cout << "    * " << service->type << endl;
-      if (service->type == string("ping")) {
-        MonitorServicePing * service_ping = (MonitorServicePing *)service;
-        service_ping->IsAvailable();
-      }
+      //if (service->type == string("ping")) {
+        //MonitorServicePing * service_ping = (MonitorServicePing *)service;
+        service->IsAvailable();
+        //}
 		}
 	}
 } 
 
-MonitorHost::MonitorHost(string label, string address, vector<MonitorServiceBase *> services) {
+MonitorHost::MonitorHost(string label, string address, vector<shared_ptr<MonitorServiceBase>> services) {
 	this->label = label;
 	this->address = address;
 	this->services = services;
 }
 
 MonitorHost::~MonitorHost() {
-  for(MonitorServiceBase *service: services)
-    delete service;
+  cout << "~MonitorHost()" << endl;
 }
 
