@@ -1,6 +1,5 @@
-#include <iostream>
-#include "yaml-cpp/yaml.h"
 #include "monitor_job.h"
+#include "yaml-cpp/yaml.h"
 
 using namespace std;
 
@@ -13,7 +12,7 @@ int main(int argc, char* argv[]) {
   MonitorJob *job;
 
   try {
-    job = new MonitorJob(argv[1]);
+    job = new MonitorJob(string(argv[1]));
     job->printtest();
   } catch(const YAML::Exception& e) {
     cerr << "YAML Exception: " << e.what() << endl;

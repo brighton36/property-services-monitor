@@ -1,13 +1,10 @@
-#include <iostream>
-#include <memory>
-
-#include "yaml-cpp/yaml.h"
 #include "monitor_job.h"
+#include "yaml-cpp/yaml.h"
 
 using namespace std;
 
-MonitorJob::MonitorJob(char *szPath) {
-	config_path = string(szPath);
+MonitorJob::MonitorJob(string path) {
+	config_path = path;
 
 	YAML::Node config = YAML::LoadFile(config_path);
 
@@ -45,6 +42,7 @@ MonitorJob::MonitorJob(char *szPath) {
       string service_type = config_service.as<string>();
       shared_ptr<MonitorServiceBase> service;
 
+      // Todo: https://stackoverflow.com/questions/582331/is-there-a-way-to-instantiate-objects-from-a-string-holding-their-class-name
       if (service_type == string("ping"))
         service = make_shared<MonitorServicePing>(address);
       else if (service_type == string("web"))
@@ -74,10 +72,7 @@ void MonitorJob::printtest() {
 
 		for(shared_ptr<MonitorServiceBase> service: host->services) {
 			cout << "    * " << service->type << endl;
-      //if (service->type == string("ping")) {
-        //MonitorServicePing * service_ping = (MonitorServicePing *)service;
-        service->IsAvailable();
-        //}
+      service->IsAvailable();
 		}
 	}
 } 
