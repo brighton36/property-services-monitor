@@ -11,7 +11,7 @@ OBJECTS = $(SOURCES:$(SRC_PATH)/%.$(SRC_EXT)=$(BUILD_PATH)/%.o)
 DEPS = $(OBJECTS:.o=.d)
 
 # flags #
-COMPILE_FLAGS = -std=c++11 -Wall -Wextra -g
+COMPILE_FLAGS = -std=c++14 -Wall -Wextra -g
 INCLUDES = -I./include/ 
 LIBS = -lyaml-cpp -lPocoNet -lPocoFoundation
 

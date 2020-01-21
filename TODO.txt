@@ -1,6 +1,5 @@
-
 # maybe try this for the services...
-  https://www.programiz.com/cpp-programming/templates
+
 # Then add support for service params (ping_attempts)
 
 

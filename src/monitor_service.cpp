@@ -15,8 +15,13 @@ MonitorServiceBase::~MonitorServiceBase() {
   cout << "~MonitorServiceBase()" << endl;
 }
 
+ServiceRegister<MonitorServiceWeb> MonitorServiceWeb::reg("web");
+
 MonitorServiceWeb::MonitorServiceWeb(string address) 
-  : MonitorServiceBase(address, "web") { }
+  : MonitorServiceBase(address, "web") {
+  cout << "   MonitorServiceWeb:" << address << endl;
+  }
+
 
 MonitorServiceWeb::~MonitorServiceWeb() {
   cout << "~MonitorServiceWeb()" << endl;

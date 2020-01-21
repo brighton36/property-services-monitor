@@ -42,13 +42,11 @@ MonitorJob::MonitorJob(string path) {
       string service_type = config_service.as<string>();
       shared_ptr<MonitorServiceBase> service;
 
-      // Todo: https://stackoverflow.com/questions/582331/is-there-a-way-to-instantiate-objects-from-a-string-holding-their-class-name
-      if (service_type == string("ping"))
-        service = make_shared<MonitorServicePing>(address);
-      else if (service_type == string("web"))
-        service = make_shared<MonitorServiceWeb>(address);
-      else
-        throw invalid_argument("Invalid service encountered."); 
+       // TODO: it'd be nice to use shared_ptrs in the macro...
+      service = shared_ptr<MonitorServiceBase>(MonitorServiceFactory::createInstance(service_type, address));
+      
+      if (service == nullptr)
+        throw invalid_argument("Invalid Host Service encountered"); 
 
 			services.push_back(service);
     }

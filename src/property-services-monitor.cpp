@@ -3,16 +3,19 @@
 
 using namespace std;
 
+// TODO: shared_ptr? 
+MonitorServiceFactory::map_type * MonitorServiceFactory::map = NULL;
+
 int main(int argc, char* argv[]) {
 	if (argc < 2) {
 		cerr << "Usage: " << argv[0] << " config.yml" << endl;
 		return 1;
 	}
 
-  MonitorJob *job;
+  shared_ptr<MonitorJob> job;
 
   try {
-    job = new MonitorJob(string(argv[1]));
+    job = make_shared<MonitorJob>(string(argv[1]));
     job->printtest();
   } catch(const YAML::Exception& e) {
     cerr << "YAML Exception: " << e.what() << endl;
@@ -24,8 +27,6 @@ int main(int argc, char* argv[]) {
     cerr << "General Exception Encountered: " << e.what() << endl;
     return 1;
   }
-
-  delete job;
 
   return 0;
 }

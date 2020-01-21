@@ -4,17 +4,15 @@
 
 using namespace std;
 
+ServiceRegister<MonitorServicePing> MonitorServicePing::reg("ping");
+
 MonitorServicePing::MonitorServicePing(string address) 
   : MonitorServiceBase(address, "ping") { 
+  cout << "   MonitorServicePing:" << address << endl;
 }
 
 MonitorServicePing::~MonitorServicePing() {
   cout << "~MonitorServicePing()" << endl;
-}
-
-const char* IsOK(bool isOK)
-{
-	return isOK ? "OK":"NO";
 }
 
 unordered_map<string, string> MonitorServicePing::Results() {
