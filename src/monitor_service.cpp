@@ -5,6 +5,7 @@ using namespace std;
 MonitorServiceBase::MonitorServiceBase(string address, string type) {
   this->address = address;
   this->type = type;
+  cout << "   MonitorServiceBase():" << address << " " << type << endl;
 }
 
 bool MonitorServiceBase::IsAvailable() {
@@ -19,7 +20,7 @@ ServiceRegister<MonitorServiceWeb> MonitorServiceWeb::reg("web");
 
 MonitorServiceWeb::MonitorServiceWeb(string address) 
   : MonitorServiceBase(address, "web") {
-  cout << "   MonitorServiceWeb:" << address << endl;
+  cout << "   MonitorServiceWeb() :" << address << endl;
   }
 
 

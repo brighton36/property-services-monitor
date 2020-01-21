@@ -22,16 +22,13 @@ class MonitorServiceBase {
     virtual bool IsAvailable();
 };
 
-
-////
-// TODO: Switch all this to shared_ptr
-template<typename T> MonitorServiceBase * createT(std::string address) {
-  return new T(address); }
+template<typename T> std::shared_ptr<MonitorServiceBase> createT(std::string address) {
+  return std::make_shared<T>(address); }
 
 struct MonitorServiceFactory {
-  typedef std::map<std::string, MonitorServiceBase*(*)(std::string address)> map_type;
+  typedef std::map<std::string, std::shared_ptr<MonitorServiceBase>(*)(std::string address)> map_type;
 
-  static MonitorServiceBase * createInstance(std::string const& s, std::string address) {
+  static std::shared_ptr<MonitorServiceBase> createInstance(std::string const& s, std::string address) {
     map_type::iterator it = getMap()->find(s);
     if(it == getMap()->end())
       return 0;
@@ -40,25 +37,22 @@ struct MonitorServiceFactory {
 
   protected:
     static map_type * getMap() {
-      // never delete'ed. (exist until program termination)
-      // because we can't guarantee correct destruction order 
       if(!map) { map = new map_type; } 
       return map; 
     }
 
   private:
+    // I'm pretty sure this can't be a shared_ptr, and must exist until program
+    // termination, since we can't guarantee the destruction order:
     static map_type * map;
 };
 
-// TODO: Rename DerivedService to ServiceRegister
 template<typename T>
 struct ServiceRegister : MonitorServiceFactory { 
   ServiceRegister(std::string const& s) { 
     getMap()->insert(std::make_pair(s, &createT<T>));
   }
 };
-
-////
 
 class MonitorServicePing : public MonitorServiceBase { 
 	public:

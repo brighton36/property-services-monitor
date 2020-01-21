@@ -8,7 +8,7 @@ ServiceRegister<MonitorServicePing> MonitorServicePing::reg("ping");
 
 MonitorServicePing::MonitorServicePing(string address) 
   : MonitorServiceBase(address, "ping") { 
-  cout << "   MonitorServicePing:" << address << endl;
+  cout << "   MonitorServicePing():" << address << endl;
 }
 
 MonitorServicePing::~MonitorServicePing() {

@@ -43,7 +43,7 @@ MonitorJob::MonitorJob(string path) {
       shared_ptr<MonitorServiceBase> service;
 
        // TODO: it'd be nice to use shared_ptrs in the macro...
-      service = shared_ptr<MonitorServiceBase>(MonitorServiceFactory::createInstance(service_type, address));
+      service = MonitorServiceFactory::createInstance(service_type, address);
       
       if (service == nullptr)
         throw invalid_argument("Invalid Host Service encountered"); 
