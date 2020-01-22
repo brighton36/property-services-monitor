@@ -26,10 +26,9 @@ bool MonitorServicePing::IsAvailable() {
   cout << "Ping :" ;
 
 	try {
-		const int attempts = 5;
+		const auto attempts = 5;
 
-		Poco::Net::SocketAddress socketAddress;
-    socketAddress = Poco::Net::SocketAddress("127.0.0.1", "80");
+		auto socketAddress = Poco::Net::SocketAddress("127.0.0.1", "80");
     //socketAddress = Poco::Net::SocketAddress("192.168.1.127", "80");
 
 		int successful_pings = Poco::Net::ICMPClient::ping(

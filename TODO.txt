@@ -1,10 +1,14 @@
-remove the couts and shitty throws
-
 address the pointer there in the monitor job
+  * MAybe rename that macro to PTR_UMAP_STR_STR
+
+implement/make better use of the auto keyword in the code
+  * Const auto? When const...
 
 # Then add support for service params (ping_attempts)
   * Change this to a pointer. *Maybe* look into variants instead of strings? nah...
-  * Validate the params at construction time?
+  * Validate the params at construction time? Probably worth setting internal variables 
+    based on what's passed, in the constructor. Maybe we shouldn't set the map using this
+    in teh base
 
 * Let's make better errors using : https://github.com/fmtlib/fmt
 
