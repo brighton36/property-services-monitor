@@ -6,23 +6,22 @@ MonitorServiceBase::MonitorServiceBase(string type, string address, PTR_UMAP_STR
   this->type = type;
   this->address = address;
   this->params = params;
-
-  for( const auto& n : *params ) {
-    fmt::print("{} : Param Key:[{}] Value:[{}]\n", this->address, n.first, n.second);
-  }
-
 }
 
 bool MonitorServiceBase::IsAvailable() {
-  cout << "TODO: in base, throw error?" << endl;
   return false;
+}
+
+PTR_UMAP_STR MonitorServiceBase::Results() {
+  // TODO: The template will likely want this...
+  PTR_UMAP_STR results;
+
+  return results;
 }
 
 ServiceRegister<MonitorServiceWeb> MonitorServiceWeb::reg("web");
 
 MonitorServiceWeb::MonitorServiceWeb(string address, PTR_UMAP_STR params) 
   : MonitorServiceBase("web", address, params) {
-
-  // TODO:
 }
 

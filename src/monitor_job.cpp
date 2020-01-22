@@ -66,13 +66,9 @@ MonitorJob::MonitorJob(string path) {
           else
             params->insert(make_pair(param, value));
         }
-
-        
       } else {
         type = config_service.as<string>();
       }
-      
-      // TODO: Test to ensure the string exists
 
       service = MonitorServiceFactory::createInstance(type, address, params);
       
@@ -84,22 +80,6 @@ MonitorJob::MonitorJob(string path) {
     }
 
     hosts.push_back(make_shared<MonitorHost>( label, address, services ));
-  }
-} 
-
-// Maybe we can do an eachHost() thing, passing the host and services to the iterator
-// that would be useful in the destructor too
-void MonitorJob::printtest() { 
-  fmt::print("To: {} From: {}\n", to, from);
-
-  for (const auto host: hosts) {
-    fmt::print("  * host: {} - {}\n", host->label, host->address);
-    fmt::print("  * Services:\n");
-
-    for(const auto service: host->services) {
-      fmt::print("    * {}\n", service->type);
-      service->IsAvailable();
-    }
   }
 } 
 

@@ -15,7 +15,20 @@ int main(int argc, char* argv[]) {
 
   try {
     job = make_shared<MonitorJob>(string(argv[1]));
-    job->printtest();
+
+    fmt::print("To  : {} \nFrom: {}\n", job->to, job->from);
+
+    for (const auto host: job->hosts) {
+      fmt::print("  * host: {} - {}\n", host->label, host->address);
+      fmt::print("  * Services:\n");
+
+      for(const auto service: host->services) {
+        const auto is_up = service->IsAvailable(); 
+
+        fmt::print("    * {} : {}\n", service->type, is_up ? "OK" : "FAIL");
+      }
+    }
+
   } catch(const YAML::Exception& e) {
     fmt::print(cerr, "YAML Exception: {}\n", e.what());
     return 1;

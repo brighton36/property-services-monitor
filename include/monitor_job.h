@@ -23,6 +23,7 @@ class MonitorServiceBase {
 
     MonitorServiceBase(std::string type, std::string, PTR_UMAP_STR);
     virtual bool IsAvailable();
+    virtual PTR_UMAP_STR Results();
 };
 
 template<typename T> std::shared_ptr<MonitorServiceBase> \
@@ -63,9 +64,9 @@ struct ServiceRegister : MonitorServiceFactory {
 
 class MonitorServicePing : public MonitorServiceBase { 
   public:
+    int tries, success_over;
     MonitorServicePing(std::string, PTR_UMAP_STR);
     bool IsAvailable();
-    PTR_UMAP_STR Results();
   private:
     static ServiceRegister<MonitorServicePing> reg;
 }; 
@@ -90,7 +91,6 @@ class MonitorJob {
     std::string config_path, to, from, smtp_host, subject;
     std::vector<std::shared_ptr<MonitorHost>> hosts;
     MonitorJob(std::string);  
-    void printtest(); 
 }; 
 
 #endif
