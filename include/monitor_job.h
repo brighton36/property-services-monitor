@@ -17,7 +17,7 @@
 #define PTR_UMAP_STR std::shared_ptr<std::unordered_map<std::string, std::string>>
 
 class MonitorServiceBase { 
-	public:
+  public:
     std::string address, type;
     PTR_UMAP_STR params;
 
@@ -62,19 +62,19 @@ struct ServiceRegister : MonitorServiceFactory {
 };
 
 class MonitorServicePing : public MonitorServiceBase { 
-	public:
+  public:
     MonitorServicePing(std::string, PTR_UMAP_STR);
     bool IsAvailable();
     PTR_UMAP_STR Results();
-	private:
-		static ServiceRegister<MonitorServicePing> reg;
+  private:
+    static ServiceRegister<MonitorServicePing> reg;
 }; 
 
 class MonitorServiceWeb : public MonitorServiceBase { 
-	public:
+  public:
     MonitorServiceWeb(std::string, PTR_UMAP_STR);
-	private:
-		static ServiceRegister<MonitorServiceWeb> reg;
+  private:
+    static ServiceRegister<MonitorServiceWeb> reg;
 }; 
 
 class MonitorHost { 
@@ -86,10 +86,10 @@ class MonitorHost {
 };
 
 class MonitorJob { 
-	public: 
+  public: 
     std::string config_path, to, from, smtp_host, subject;
     std::vector<std::shared_ptr<MonitorHost>> hosts;
-    MonitorJob(std::string);	
+    MonitorJob(std::string);  
     void printtest(); 
 }; 
 

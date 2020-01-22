@@ -6,10 +6,10 @@ using namespace std;
 MonitorServiceFactory::map_type * MonitorServiceFactory::map = nullptr;
 
 int main(int argc, char* argv[]) {
-	if (argc < 2) {
+  if (argc < 2) {
     fmt::print(cerr, "Usage: {} config.yml\n", argv[0]);
-		return 1;
-	}
+    return 1;
+  }
 
   shared_ptr<MonitorJob> job;
 

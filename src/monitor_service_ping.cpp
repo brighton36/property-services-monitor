@@ -21,13 +21,13 @@ bool MonitorServicePing::IsAvailable() {
   
   cout << "Ping :" ;
 
-	try {
-		const auto attempts = 5;
+  try {
+    const auto attempts = 5;
 
-		auto socketAddress = Poco::Net::SocketAddress("127.0.0.1", "80");
+    auto socketAddress = Poco::Net::SocketAddress("127.0.0.1", "80");
     //socketAddress = Poco::Net::SocketAddress("192.168.1.127", "80");
 
-		auto successful_pings = Poco::Net::ICMPClient::ping(
+    auto successful_pings = Poco::Net::ICMPClient::ping(
       socketAddress, Poco::Net::IPAddress::IPv4, attempts);
 
     if (successful_pings == attempts)
@@ -35,9 +35,9 @@ bool MonitorServicePing::IsAvailable() {
     else
       cout << "FAIL" << endl;
 
-	} catch(const Poco::IOException& e) {
-		cout << "Must run as root. TODO: Bubble it up " << endl;
-	}
+  } catch(const Poco::IOException& e) {
+    cout << "Must run as root. TODO: Bubble it up " << endl;
+  }
 
   return false;
 }
