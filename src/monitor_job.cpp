@@ -3,38 +3,44 @@
 
 using namespace std;
 
+#define MISSING_FIELD "Missing \"{}\" field."
+#define MISSING_HOST_FIELD "Missing {} for host \"{}\"."
+
 MonitorJob::MonitorJob(string path) {
 	config_path = path;
 
 	YAML::Node config = YAML::LoadFile(config_path);
 
 	if (!config["to"]) 
-		throw invalid_argument("Missing \"to\" field.");
+    throw invalid_argument(fmt::format(MISSING_FIELD, "to"));
 	if (!config["from"]) 
-		throw invalid_argument("Missing \"from\" field.");
+    throw invalid_argument(fmt::format(MISSING_FIELD, "from"));
 	if (!config["subject"]) 
-		throw invalid_argument("Missing \"subject\" field.");
+    throw invalid_argument(fmt::format(MISSING_FIELD, "subject"));
 	if (!config["smtp_host"]) 
-		throw invalid_argument("Missing \"smtp_host\" field.");
+    throw invalid_argument(fmt::format(MISSING_FIELD, "smtp_host"));
 	if (!config["hosts"]) 
-		throw invalid_argument("Missing \"hosts\" field.");
+    throw invalid_argument(fmt::format(MISSING_FIELD, "hosts"));
 
 	to = config["to"].as<string>();
 	from = config["from"].as<string>();
 	smtp_host = config["smtp_host"].as<string>();
 	subject = config["subject"].as<string>();
 
-	if (config["hosts"].size() < 1) throw invalid_argument("No Hosts to monitor"); 
+	if (config["hosts"].size() < 1) throw invalid_argument("No Hosts to monitor."); 
 	
 	for (YAML::detail::iterator_value config_host: config["hosts"]) {
 		if (!config_host["label"]) 
-			throw invalid_argument("Missing label for host.");
-		if (!config_host["address"]) 
-			throw invalid_argument("Missing address for host.");
-		if (config_host["services"].size() < 1 || !config_host["services"].IsSequence()) 
-			throw invalid_argument("Missing services for host"); 
+			throw invalid_argument("One or more hosts are missing a label.");
 
     string label = config_host["label"].as<string>();
+
+		if (!config_host["address"]) 
+			throw invalid_argument(fmt::format(MISSING_HOST_FIELD, "address", label));
+
+		if (config_host["services"].size() < 1 || !config_host["services"].IsSequence()) 
+			throw invalid_argument(fmt::format(MISSING_HOST_FIELD, "services", label));
+
     string address = config_host["address"].as<string>();
 
 		vector<shared_ptr<MonitorServiceBase>> services;
@@ -47,8 +53,8 @@ MonitorJob::MonitorJob(string path) {
 
       if (config_service.IsMap()) {
         if (!config_service["type"]) 
-          throw invalid_argument("Missing service type");
-
+          throw invalid_argument(
+            fmt::format("Missing a service type under host \"{}\"", label)); 
 
 				for(YAML::const_iterator it=config_service.begin();it!=config_service.end();++it) {
           string param = it->first.as<std::string>();
@@ -70,7 +76,8 @@ MonitorJob::MonitorJob(string path) {
       service = MonitorServiceFactory::createInstance(type, address, params);
       
       if (service == nullptr)
-        throw invalid_argument("Invalid Host Service encountered"); 
+        throw invalid_argument(
+          fmt::format("Invalid Service encountered for host \"{}\"", label)); 
 
 			services.push_back(service);
     }

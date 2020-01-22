@@ -8,15 +8,10 @@ ServiceRegister<MonitorServicePing> MonitorServicePing::reg("ping");
 
 MonitorServicePing::MonitorServicePing(string address, UMAP_STRING_STRING params) 
   : MonitorServiceBase("ping", address, params) { 
-  cout << "   MonitorServicePing():" << address << endl;
   for( const auto& n : this->params ) {
     std::cout << "Param Key:[" << n.first << "] Value:[" << n.second << "]\n";
   }
 
-}
-
-MonitorServicePing::~MonitorServicePing() {
-  cout << "~MonitorServicePing()" << endl;
 }
 
 UMAP_STRING_STRING MonitorServicePing::Results() {
@@ -48,8 +43,6 @@ bool MonitorServicePing::IsAvailable() {
 	} catch(Poco::IOException& e) {
 		cout << "Must run as root. TODO: Bubble it up " << endl;
 	}
-
-
 
   return false;
 }

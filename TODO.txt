@@ -1,3 +1,7 @@
+remove the couts and shitty throws
+
+address the pointer there in the monitor job
+
 # Then add support for service params (ping_attempts)
   * Change this to a pointer. *Maybe* look into variants instead of strings? nah...
   * Validate the params at construction time?

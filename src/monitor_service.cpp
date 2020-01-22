@@ -6,7 +6,6 @@ MonitorServiceBase::MonitorServiceBase(string type, string address, UMAP_STRING_
   this->type = type;
   this->address = address;
   this->params = params;
-  cout << "   MonitorServiceBase():" << address << " " << type << endl;
 }
 
 bool MonitorServiceBase::IsAvailable() {
@@ -18,13 +17,8 @@ ServiceRegister<MonitorServiceWeb> MonitorServiceWeb::reg("web");
 
 MonitorServiceWeb::MonitorServiceWeb(string address, UMAP_STRING_STRING params) 
   : MonitorServiceBase("web", address, params) {
-  cout << "   MonitorServiceWeb() :" << address << endl;
   for( const auto& n : this->params ) {
     std::cout << "Param Key:[" << n.first << "] Value:[" << n.second << "]\n";
   }
-}
-
-MonitorServiceWeb::~MonitorServiceWeb() {
-  cout << "~MonitorServiceWeb()" << endl;
 }
 

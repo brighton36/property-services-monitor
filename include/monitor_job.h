@@ -30,9 +30,12 @@ template<typename T> std::shared_ptr<MonitorServiceBase> \
     return std::make_shared<T>(address, params); }
 
 struct MonitorServiceFactory {
-  typedef std::map<std::string, std::shared_ptr<MonitorServiceBase>(*)(std::string address, UMAP_STRING_STRING params)> map_type;
+  typedef std::map<std::string, std::shared_ptr<MonitorServiceBase>(*)( \
+    std::string address, UMAP_STRING_STRING params)> map_type;
 
-  static std::shared_ptr<MonitorServiceBase> createInstance(std::string const& s, std::string address, UMAP_STRING_STRING params) {
+  static std::shared_ptr<MonitorServiceBase> createInstance(
+    std::string const& s, std::string address, UMAP_STRING_STRING params) {
+
     map_type::iterator it = getMap()->find(s);
     if(it == getMap()->end())
       return 0;
@@ -58,11 +61,9 @@ struct ServiceRegister : MonitorServiceFactory {
   }
 };
 
-// TODO: Remove the function parameter names?
 class MonitorServicePing : public MonitorServiceBase { 
 	public:
     MonitorServicePing(std::string, UMAP_STRING_STRING);
-    ~MonitorServicePing();
     bool IsAvailable();
     UMAP_STRING_STRING Results();
 	private:
@@ -72,7 +73,6 @@ class MonitorServicePing : public MonitorServiceBase {
 class MonitorServiceWeb : public MonitorServiceBase { 
 	public:
     MonitorServiceWeb(std::string, UMAP_STRING_STRING);
-    ~MonitorServiceWeb();
 	private:
 		static ServiceRegister<MonitorServiceWeb> reg;
 }; 
