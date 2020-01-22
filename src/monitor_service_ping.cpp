@@ -31,7 +31,7 @@ bool MonitorServicePing::IsAvailable() {
 		auto socketAddress = Poco::Net::SocketAddress("127.0.0.1", "80");
     //socketAddress = Poco::Net::SocketAddress("192.168.1.127", "80");
 
-		int successful_pings = Poco::Net::ICMPClient::ping(
+		auto successful_pings = Poco::Net::ICMPClient::ping(
       socketAddress, Poco::Net::IPAddress::IPv4, attempts);
 
     if (successful_pings == attempts)

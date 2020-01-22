@@ -92,8 +92,8 @@ void MonitorJob::printtest() {
   fmt::print("To: {} From: {}\n", to, from);
 
 	for (auto host: hosts) {
-  fmt::print("  * host: {} - {}\n", host->label, host->address);
-  fmt::print("  * Services:\n");
+    fmt::print("  * host: {} - {}\n", host->label, host->address);
+    fmt::print("  * Services:\n");
 
 		for(auto service: host->services) {
       fmt::print("    * {}\n", service->type);

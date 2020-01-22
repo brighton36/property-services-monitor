@@ -14,7 +14,9 @@
 #define UNUSED
 #endif
 
+// TODO: Remove?
 #define UMAP_STRING_STRING std::unordered_map<std::string, std::string>
+#define PTR_UMAP_STR std::shared_ptr<std::unordered_map<std::string, std::string>>
 
 class MonitorServiceBase { 
 	public:
