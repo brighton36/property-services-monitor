@@ -3,8 +3,7 @@
 
 using namespace std;
 
-// TODO: shared_ptr? 
-MonitorServiceFactory::map_type * MonitorServiceFactory::map = NULL;
+MonitorServiceFactory::map_type * MonitorServiceFactory::map = nullptr;
 
 int main(int argc, char* argv[]) {
 	if (argc < 2) {

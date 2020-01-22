@@ -31,19 +31,43 @@ MonitorJob::MonitorJob(string path) {
 			throw invalid_argument("Missing label for host.");
 		if (!config_host["address"]) 
 			throw invalid_argument("Missing address for host.");
-		if (config_host["services"].size() < 1) 
+		if (config_host["services"].size() < 1 || !config_host["services"].IsSequence()) 
 			throw invalid_argument("Missing services for host"); 
 
     string label = config_host["label"].as<string>();
     string address = config_host["address"].as<string>();
 
 		vector<shared_ptr<MonitorServiceBase>> services;
+
 		for (YAML::detail::iterator_value config_service: config_host["services"]) {
-      string service_type = config_service.as<string>();
+      string type;
+      // TODO: Does this need to be pointer... I think it does.
+			unordered_map<std::string, std::string> params;
       shared_ptr<MonitorServiceBase> service;
 
-       // TODO: it'd be nice to use shared_ptrs in the macro...
-      service = MonitorServiceFactory::createInstance(service_type, address);
+      if (config_service.IsMap()) {
+        if (!config_service["type"]) 
+          throw invalid_argument("Missing service type");
+
+
+				for(YAML::const_iterator it=config_service.begin();it!=config_service.end();++it) {
+          string param = it->first.as<std::string>();
+          string value = it->second.as<std::string>();
+
+          if (param == "type")
+            type = value;
+          else
+            params[param] = value;
+				}
+
+        
+      } else {
+        type = config_service.as<string>();
+      }
+      
+      // TODO: Test to ensure the string exists
+
+      service = MonitorServiceFactory::createInstance(type, address, params);
       
       if (service == nullptr)
         throw invalid_argument("Invalid Host Service encountered"); 

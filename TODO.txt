@@ -1,7 +1,4 @@
-# maybe try this for the services...
-
 # Then add support for service params (ping_attempts)
-
 
 # Send email: https://github.com/karastojko/mailio
 

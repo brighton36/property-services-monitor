@@ -6,9 +6,13 @@ using namespace std;
 
 ServiceRegister<MonitorServicePing> MonitorServicePing::reg("ping");
 
-MonitorServicePing::MonitorServicePing(string address) 
-  : MonitorServiceBase(address, "ping") { 
+MonitorServicePing::MonitorServicePing(string address, unordered_map<string, string> params) 
+  : MonitorServiceBase("ping", address, params) { 
   cout << "   MonitorServicePing():" << address << endl;
+  for( const auto& n : this->params ) {
+    std::cout << "Param Key:[" << n.first << "] Value:[" << n.second << "]\n";
+  }
+
 }
 
 MonitorServicePing::~MonitorServicePing() {

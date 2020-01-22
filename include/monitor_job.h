@@ -16,23 +16,24 @@
 class MonitorServiceBase { 
 	public:
     std::string address, type;
+    std::unordered_map<std::string, std::string> params;
 
-    MonitorServiceBase(std::string address, std::string type);
+    MonitorServiceBase(std::string type, std::string address, std::unordered_map<std::string, std::string> params);
     ~MonitorServiceBase();
     virtual bool IsAvailable();
 };
 
-template<typename T> std::shared_ptr<MonitorServiceBase> createT(std::string address) {
-  return std::make_shared<T>(address); }
+template<typename T> std::shared_ptr<MonitorServiceBase> createT(std::string address, std::unordered_map<std::string, std::string> params) {
+  return std::make_shared<T>(address, params); }
 
 struct MonitorServiceFactory {
-  typedef std::map<std::string, std::shared_ptr<MonitorServiceBase>(*)(std::string address)> map_type;
+  typedef std::map<std::string, std::shared_ptr<MonitorServiceBase>(*)(std::string address, std::unordered_map<std::string, std::string> params)> map_type;
 
-  static std::shared_ptr<MonitorServiceBase> createInstance(std::string const& s, std::string address) {
+  static std::shared_ptr<MonitorServiceBase> createInstance(std::string const& s, std::string address, std::unordered_map<std::string, std::string> params) {
     map_type::iterator it = getMap()->find(s);
     if(it == getMap()->end())
       return 0;
-    return it->second(address);
+    return it->second(address, params);
   }
 
   protected:
@@ -54,9 +55,10 @@ struct ServiceRegister : MonitorServiceFactory {
   }
 };
 
+// TODO: Remove the function parameter names?
 class MonitorServicePing : public MonitorServiceBase { 
 	public:
-    MonitorServicePing(std::string address);
+    MonitorServicePing(std::string address, std::unordered_map<std::string, std::string> params);
     ~MonitorServicePing();
     bool IsAvailable();
     std::unordered_map<std::string, std::string> Results();
@@ -66,7 +68,7 @@ class MonitorServicePing : public MonitorServiceBase {
 
 class MonitorServiceWeb : public MonitorServiceBase { 
 	public:
-    MonitorServiceWeb(std::string address);
+    MonitorServiceWeb(std::string address, std::unordered_map<std::string, std::string> params);
     ~MonitorServiceWeb();
 	private:
 		static ServiceRegister<MonitorServiceWeb> reg;
