@@ -6,7 +6,7 @@ using namespace std;
 
 ServiceRegister<MonitorServicePing> MonitorServicePing::reg("ping");
 
-MonitorServicePing::MonitorServicePing(string address, unordered_map<string, string> params) 
+MonitorServicePing::MonitorServicePing(string address, UMAP_STRING_STRING params) 
   : MonitorServiceBase("ping", address, params) { 
   cout << "   MonitorServicePing():" << address << endl;
   for( const auto& n : this->params ) {
@@ -19,8 +19,8 @@ MonitorServicePing::~MonitorServicePing() {
   cout << "~MonitorServicePing()" << endl;
 }
 
-unordered_map<string, string> MonitorServicePing::Results() {
-  unordered_map<string, string> results;
+UMAP_STRING_STRING MonitorServicePing::Results() {
+  UMAP_STRING_STRING results;
 
   return results;
 }

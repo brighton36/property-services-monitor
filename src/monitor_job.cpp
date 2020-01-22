@@ -42,7 +42,7 @@ MonitorJob::MonitorJob(string path) {
 		for (YAML::detail::iterator_value config_service: config_host["services"]) {
       string type;
       // TODO: Does this need to be pointer... I think it does.
-			unordered_map<std::string, std::string> params;
+			UMAP_STRING_STRING params;
       shared_ptr<MonitorServiceBase> service;
 
       if (config_service.IsMap()) {
@@ -79,21 +79,17 @@ MonitorJob::MonitorJob(string path) {
 	}
 }	
 
-MonitorJob::~MonitorJob() {
-  cout << "~MonitorJob()" << endl;
-}
-
 // Maybe we can do an eachHost() thing, passing the host and services to the iterator
 // that would be useful in the destructor too
 void MonitorJob::printtest() { 
-	cout << "To  :" << to << endl << "From:" << from << endl;
+  fmt::print("To: {} From: {}\n", to, from);
 
 	for (shared_ptr<MonitorHost> host: hosts) {
-		cout << "  * host: " << host->label << " - " << host->address << endl;
-		cout << "  * Services:" << endl;
+  fmt::print("  * host: {} - {}\n", host->label, host->address);
+  fmt::print("  * Services:\n");
 
 		for(shared_ptr<MonitorServiceBase> service: host->services) {
-			cout << "    * " << service->type << endl;
+      fmt::print("    * {}\n", service->type);
       service->IsAvailable();
 		}
 	}
@@ -103,9 +99,5 @@ MonitorHost::MonitorHost(string label, string address, vector<shared_ptr<Monitor
 	this->label = label;
 	this->address = address;
 	this->services = services;
-}
-
-MonitorHost::~MonitorHost() {
-  cout << "~MonitorHost()" << endl;
 }
 

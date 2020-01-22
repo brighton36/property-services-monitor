@@ -1,4 +1,10 @@
 # Then add support for service params (ping_attempts)
+  * Change this to a pointer. *Maybe* look into variants instead of strings? nah...
+  * Validate the params at construction time?
+
+* Let's make better errors using : https://github.com/fmtlib/fmt
+
+* Push to github
 
 # Send email: https://github.com/karastojko/mailio
 

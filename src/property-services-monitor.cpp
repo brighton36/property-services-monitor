@@ -7,7 +7,7 @@ MonitorServiceFactory::map_type * MonitorServiceFactory::map = nullptr;
 
 int main(int argc, char* argv[]) {
 	if (argc < 2) {
-		cerr << "Usage: " << argv[0] << " config.yml" << endl;
+    fmt::print(cerr, "Usage: {} config.yml\n", argv[0]);
 		return 1;
 	}
 
@@ -17,13 +17,13 @@ int main(int argc, char* argv[]) {
     job = make_shared<MonitorJob>(string(argv[1]));
     job->printtest();
   } catch(const YAML::Exception& e) {
-    cerr << "YAML Exception: " << e.what() << endl;
+    fmt::print(cerr, "YAML Exception: {}\n", e.what());
     return 1;
   } catch(const invalid_argument& e) {
-    cerr << "invalid_argument Encountered: " << e.what() << endl;
+    fmt::print(cerr, "invalid_argument Encountered: {}\n", e.what());
     return 1;
   } catch(const exception& e) {
-    cerr << "General Exception Encountered: " << e.what() << endl;
+    fmt::print(cerr, "General Exception Encountered: {}\n", e.what());
     return 1;
   }
 
