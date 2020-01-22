@@ -4,6 +4,7 @@
 *.swn
 *.o
 *.yml
+TODO.txt
 build/*
 
 property-services-monitor

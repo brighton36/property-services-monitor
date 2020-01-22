@@ -14,29 +14,27 @@
 #define UNUSED
 #endif
 
-// TODO: Remove?
-#define UMAP_STRING_STRING std::unordered_map<std::string, std::string>
 #define PTR_UMAP_STR std::shared_ptr<std::unordered_map<std::string, std::string>>
 
 class MonitorServiceBase { 
 	public:
     std::string address, type;
-    UMAP_STRING_STRING params;
+    PTR_UMAP_STR params;
 
-    MonitorServiceBase(std::string type, std::string, UMAP_STRING_STRING);
+    MonitorServiceBase(std::string type, std::string, PTR_UMAP_STR);
     virtual bool IsAvailable();
 };
 
 template<typename T> std::shared_ptr<MonitorServiceBase> \
-  createT(std::string address, UMAP_STRING_STRING params) {
+  createT(std::string address, PTR_UMAP_STR params) {
     return std::make_shared<T>(address, params); }
 
 struct MonitorServiceFactory {
   typedef std::map<std::string, std::shared_ptr<MonitorServiceBase>(*)( \
-    std::string address, UMAP_STRING_STRING params)> map_type;
+    std::string address, PTR_UMAP_STR params)> map_type;
 
   static std::shared_ptr<MonitorServiceBase> createInstance(
-    std::string const& s, std::string address, UMAP_STRING_STRING params) {
+    std::string const& s, std::string address, PTR_UMAP_STR params) {
 
     map_type::iterator it = getMap()->find(s);
     if(it == getMap()->end())
@@ -65,16 +63,16 @@ struct ServiceRegister : MonitorServiceFactory {
 
 class MonitorServicePing : public MonitorServiceBase { 
 	public:
-    MonitorServicePing(std::string, UMAP_STRING_STRING);
+    MonitorServicePing(std::string, PTR_UMAP_STR);
     bool IsAvailable();
-    UMAP_STRING_STRING Results();
+    PTR_UMAP_STR Results();
 	private:
 		static ServiceRegister<MonitorServicePing> reg;
 }; 
 
 class MonitorServiceWeb : public MonitorServiceBase { 
 	public:
-    MonitorServiceWeb(std::string, UMAP_STRING_STRING);
+    MonitorServiceWeb(std::string, PTR_UMAP_STR);
 	private:
 		static ServiceRegister<MonitorServiceWeb> reg;
 }; 

@@ -9,7 +9,7 @@ using namespace std;
 MonitorJob::MonitorJob(string path) {
 	config_path = path;
 
-	auto config = YAML::LoadFile(config_path);
+	const auto config = YAML::LoadFile(config_path);
 
 	if (!config["to"]) 
     throw invalid_argument(fmt::format(MISSING_FIELD, "to"));
@@ -29,11 +29,11 @@ MonitorJob::MonitorJob(string path) {
 
 	if (config["hosts"].size() < 1) throw invalid_argument("No Hosts to monitor."); 
 	
-	for (YAML::detail::iterator_value config_host: config["hosts"]) {
+	for (const auto config_host: config["hosts"]) {
 		if (!config_host["label"]) 
 			throw invalid_argument("One or more hosts are missing a label.");
 
-    auto label = config_host["label"].as<string>();
+    const auto label = config_host["label"].as<string>();
 
 		if (!config_host["address"]) 
 			throw invalid_argument(fmt::format(MISSING_HOST_FIELD, "address", label));
@@ -45,10 +45,11 @@ MonitorJob::MonitorJob(string path) {
 
 		vector<shared_ptr<MonitorServiceBase>> services;
 
-		for (auto config_service: config_host["services"]) {
+		for (const auto config_service: config_host["services"]) {
       string type;
-      // TODO: Does this need to be pointer... I think it does.
-			UMAP_STRING_STRING params;
+      
+      PTR_UMAP_STR params = make_shared<unordered_map<string, string>>();
+
       shared_ptr<MonitorServiceBase> service;
 
       if (config_service.IsMap()) {
@@ -57,13 +58,13 @@ MonitorJob::MonitorJob(string path) {
             fmt::format("Missing a service type under host \"{}\"", label)); 
 
 				for(auto it=config_service.begin();it!=config_service.end();++it) {
-          auto param = it->first.as<std::string>();
-          auto value = it->second.as<std::string>();
+          const auto param = it->first.as<std::string>();
+          const auto value = it->second.as<std::string>();
 
           if (param == "type")
             type = value;
           else
-            params[param] = value;
+            params->insert(make_pair(param, value));
 				}
 
         
@@ -91,11 +92,11 @@ MonitorJob::MonitorJob(string path) {
 void MonitorJob::printtest() { 
   fmt::print("To: {} From: {}\n", to, from);
 
-	for (auto host: hosts) {
+	for (const auto host: hosts) {
     fmt::print("  * host: {} - {}\n", host->label, host->address);
     fmt::print("  * Services:\n");
 
-		for(auto service: host->services) {
+		for(const auto service: host->services) {
       fmt::print("    * {}\n", service->type);
       service->IsAvailable();
 		}

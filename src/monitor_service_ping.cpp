@@ -6,16 +6,12 @@ using namespace std;
 
 ServiceRegister<MonitorServicePing> MonitorServicePing::reg("ping");
 
-MonitorServicePing::MonitorServicePing(string address, UMAP_STRING_STRING params) 
+MonitorServicePing::MonitorServicePing(string address, PTR_UMAP_STR params) 
   : MonitorServiceBase("ping", address, params) { 
-  for( const auto& n : this->params ) {
-    std::cout << "Param Key:[" << n.first << "] Value:[" << n.second << "]\n";
-  }
-
 }
 
-UMAP_STRING_STRING MonitorServicePing::Results() {
-  UMAP_STRING_STRING results;
+PTR_UMAP_STR MonitorServicePing::Results() {
+  PTR_UMAP_STR results;
 
   return results;
 }
@@ -39,7 +35,7 @@ bool MonitorServicePing::IsAvailable() {
     else
       cout << "FAIL" << endl;
 
-	} catch(Poco::IOException& e) {
+	} catch(const Poco::IOException& e) {
 		cout << "Must run as root. TODO: Bubble it up " << endl;
 	}
 

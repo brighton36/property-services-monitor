@@ -2,10 +2,15 @@
 
 using namespace std;
 
-MonitorServiceBase::MonitorServiceBase(string type, string address, UMAP_STRING_STRING params) {
+MonitorServiceBase::MonitorServiceBase(string type, string address, PTR_UMAP_STR params) {
   this->type = type;
   this->address = address;
   this->params = params;
+
+  for( const auto& n : *params ) {
+    fmt::print("{} : Param Key:[{}] Value:[{}]\n", this->address, n.first, n.second);
+  }
+
 }
 
 bool MonitorServiceBase::IsAvailable() {
@@ -15,10 +20,9 @@ bool MonitorServiceBase::IsAvailable() {
 
 ServiceRegister<MonitorServiceWeb> MonitorServiceWeb::reg("web");
 
-MonitorServiceWeb::MonitorServiceWeb(string address, UMAP_STRING_STRING params) 
+MonitorServiceWeb::MonitorServiceWeb(string address, PTR_UMAP_STR params) 
   : MonitorServiceBase("web", address, params) {
-  for( const auto& n : this->params ) {
-    std::cout << "Param Key:[" << n.first << "] Value:[" << n.second << "]\n";
-  }
+
+  // TODO:
 }
 

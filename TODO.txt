@@ -1,8 +1,3 @@
-address the pointer there in the monitor job
-  * MAybe rename that macro to PTR_UMAP_STR_STR
-
-implement/make better use of the auto keyword in the code
-  * Const auto? When const...
 
 # Then add support for service params (ping_attempts)
   * Change this to a pointer. *Maybe* look into variants instead of strings? nah...
