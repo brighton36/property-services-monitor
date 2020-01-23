@@ -6,11 +6,6 @@ using namespace std;
 
 ServiceRegister<MonitorServicePing> MonitorServicePing::reg("ping");
 
-enum MonitorServicePingParams { tries,  success_over };
-
-static std::map<std::string, MonitorServicePingParams> s_mapStringValues;
-
-
 MonitorServicePing::MonitorServicePing(string address, PTR_UMAP_STR params) 
   : MonitorServiceBase("ping", address, params) { 
 
@@ -29,15 +24,14 @@ MonitorServicePing::MonitorServicePing(string address, PTR_UMAP_STR params)
 }
 
 bool MonitorServicePing::IsAvailable() {
-  // TODO: Cache result?
-  
   try {
     // The port does not matter at all. Not sure why the library makes us set it.
     auto socketAddress = Poco::Net::SocketAddress(this->address, "80");
 
-    auto successful_pings = Poco::Net::ICMPClient::ping(
+    unsigned int successful_pings = Poco::Net::ICMPClient::ping(
       socketAddress, Poco::Net::IPAddress::IPv4, this->tries);
 
+    // TODO: Capture the successful_pings into result
     return (successful_pings > this->success_over);
 
   } catch(const Poco::IOException& e) {

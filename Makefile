@@ -11,9 +11,9 @@ OBJECTS = $(SOURCES:$(SRC_PATH)/%.$(SRC_EXT)=$(BUILD_PATH)/%.o)
 DEPS = $(OBJECTS:.o=.d)
 
 # flags #
-COMPILE_FLAGS = -std=c++14 -Wall -Wextra -g
+COMPILE_FLAGS = -std=c++14 -Wall -Wextra # -g
 INCLUDES = -I./include/ 
-LIBS = -lfmt -lyaml-cpp -lPocoNet -lPocoFoundation
+LIBS = -lfmt -lyaml-cpp -lPocoNet -lPocoNetSSL -lPocoFoundation
 
 .PHONY: default_target
 default_target: release

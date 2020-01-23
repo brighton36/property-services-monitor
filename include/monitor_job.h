@@ -1,4 +1,5 @@
 #include <iostream>
+#include <regex>
 #include <vector>
 #include <memory>
 #include <unordered_map> 
@@ -20,10 +21,11 @@ class MonitorServiceBase {
   public:
     std::string address, type;
     PTR_UMAP_STR params;
+    PTR_UMAP_STR results;
 
     MonitorServiceBase(std::string type, std::string, PTR_UMAP_STR);
+
     virtual bool IsAvailable();
-    virtual PTR_UMAP_STR Results();
 };
 
 template<typename T> std::shared_ptr<MonitorServiceBase> \
@@ -64,7 +66,7 @@ struct ServiceRegister : MonitorServiceFactory {
 
 class MonitorServicePing : public MonitorServiceBase { 
   public:
-    int tries, success_over;
+    unsigned int tries, success_over;
     MonitorServicePing(std::string, PTR_UMAP_STR);
     bool IsAvailable();
   private:
@@ -73,7 +75,13 @@ class MonitorServicePing : public MonitorServiceBase {
 
 class MonitorServiceWeb : public MonitorServiceBase { 
   public:
+    unsigned int port, status_equals;
+    std::string path;
+    std::regex ensure_match;
+		bool isHttps;
+
     MonitorServiceWeb(std::string, PTR_UMAP_STR);
+    bool IsAvailable();
   private:
     static ServiceRegister<MonitorServiceWeb> reg;
 }; 

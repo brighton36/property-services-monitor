@@ -19,8 +19,7 @@ int main(int argc, char* argv[]) {
     fmt::print("To  : {} \nFrom: {}\n", job->to, job->from);
 
     for (const auto host: job->hosts) {
-      fmt::print("  * host: {} - {}\n", host->label, host->address);
-      fmt::print("  * Services:\n");
+      fmt::print("  * Host: {} ({})\n", host->label, host->address);
 
       for(const auto service: host->services) {
         const auto is_up = service->IsAvailable(); 

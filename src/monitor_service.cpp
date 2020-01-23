@@ -6,22 +6,8 @@ MonitorServiceBase::MonitorServiceBase(string type, string address, PTR_UMAP_STR
   this->type = type;
   this->address = address;
   this->params = params;
+  this->results = make_shared<unordered_map<string, string>>();
 }
 
-bool MonitorServiceBase::IsAvailable() {
-  return false;
-}
-
-PTR_UMAP_STR MonitorServiceBase::Results() {
-  // TODO: The template will likely want this...
-  PTR_UMAP_STR results;
-
-  return results;
-}
-
-ServiceRegister<MonitorServiceWeb> MonitorServiceWeb::reg("web");
-
-MonitorServiceWeb::MonitorServiceWeb(string address, PTR_UMAP_STR params) 
-  : MonitorServiceBase("web", address, params) {
-}
+bool MonitorServiceBase::IsAvailable() { return false; }
 
