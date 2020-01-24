@@ -1,9 +1,8 @@
 #include "monitor_job.h"
 
+#include "Poco/Net/HTTPRequest.h"
 #include "Poco/Net/HTTPClientSession.h"
 #include "Poco/Net/HTTPSClientSession.h"
-#include "Poco/Net/HTTPRequest.h"
-#include "Poco/Net/HTTPResponse.h"
 #include "Poco/StreamCopier.h"
 #include "Poco/Exception.h"
 
@@ -46,51 +45,46 @@ MonitorServiceWeb::MonitorServiceWeb(string address, PTR_UMAP_STR params)
   if (!this->port) this->port = (this->isHttps) ? 443 : 80;
 }
 
+string MonitorServiceWeb::HttXRequest(string path, Poco::Net::HTTPResponse &response) {
+
+  string content;
+
+  Poco::Net::HTTPRequest request( Poco::Net::HTTPRequest::HTTP_GET, 
+    path, Poco::Net::HTTPMessage::HTTP_1_1 );
+
+  if (this->isHttps) {
+    const Poco::Net::Context::Ptr context = new Poco::Net::Context(
+      Poco::Net::Context::CLIENT_USE, "", "", "",
+      Poco::Net::Context::VERIFY_NONE, 9, false,
+      "ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
+    Poco::Net::HTTPSClientSession session(this->address, this->port, context);
+    session.sendRequest(request);
+
+    Poco::StreamCopier::copyToString(session.receiveResponse(response), content);
+    return content;
+  } else {
+    Poco::Net::HTTPClientSession session(this->address, this->port);
+    session.sendRequest(request);
+
+    Poco::StreamCopier::copyToString(session.receiveResponse(response), content);
+    return content;
+  }
+}
+
 bool MonitorServiceWeb::IsAvailable() {
 
 	try {
-    this->results->clear(); // TODO: maybe put this in the parent... and set params there
+    this->results->clear(); // TODO: put this in the parent... and set initial params there
 
-    // TODO: SSL
 		Poco::Net::HTTPResponse response;
 
-		Poco::Net::HTTPRequest request( Poco::Net::HTTPRequest::HTTP_GET, 
-      this->path, Poco::Net::HTTPMessage::HTTP_1_1 );
-
-		string response_content;
-
-    if (this->isHttps) {
-      const Poco::Net::Context::Ptr context = new Poco::Net::Context(
-        Poco::Net::Context::CLIENT_USE, "", "", "",
-        Poco::Net::Context::VERIFY_NONE, 9, false,
-        "ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
-		
-			cout << "Trying SSL" << endl;
-      Poco::Net::HTTPSClientSession session(this->address, this->port, context);
-			//TODO: DRY this up. Maybe use a variant for session?
-			session.sendRequest(request);
-			istream& rs = session.receiveResponse(response);
-      Poco::StreamCopier::copyToString(rs, response_content);
-			cout << "Response:" << response_content << endl;
-    }
-    else {
-      Poco::Net::HTTPClientSession session(this->address, this->port);
-			//TODO: DRY this up. Maybe use a variant for session?
-			session.sendRequest(request);
-			istream& rs = session.receiveResponse(response);
-      Poco::StreamCopier::copyToString(rs, response_content);
-		}
+    string response_content = this->HttXRequest(this->path, response);
 
     this->results->emplace("response_status", to_string(response.getStatus()));
     this->results->emplace("response_reason", response.getReason());
+    this->results->emplace("response_content", response_content);
 
     if (response.getStatus() == this->status_equals) {
-
-      // tODO: Put this herePoco::StreamCopier::copyToString(rs, response_content);
-
-      this->results->emplace("response_content", response_content);
-			//cout << "Response:" << response_content << endl;
-
       // TODO: Test if we were passed a regex, and only then Grep it for things.
       smatch m;
       regex_search(response_content, m, this->ensure_match);

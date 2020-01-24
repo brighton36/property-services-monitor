@@ -6,6 +6,8 @@
 #include <map> 
 #include <fmt/ostream.h>
 
+#include "Poco/Net/HTTPResponse.h"
+
 #ifndef MONITOR_JOB_H
 #define MONITOR_JOB_H
 
@@ -82,6 +84,7 @@ class MonitorServiceWeb : public MonitorServiceBase {
 
     MonitorServiceWeb(std::string, PTR_UMAP_STR);
     bool IsAvailable();
+    std::string HttXRequest(std::string path, Poco::Net::HTTPResponse &response);
   private:
     static ServiceRegister<MonitorServiceWeb> reg;
 }; 
