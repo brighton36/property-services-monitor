@@ -34,10 +34,7 @@ MonitorServiceWeb::MonitorServiceWeb(string address, PTR_UMAP_STR params)
     else if ("path" == n.first)
       this->path = n.second;
     else if ("ensure_match" == n.first)
-      // TODO : It'd be nice to support a //i type thing...
-      // We probably need to store this as  a string and test it here. Then, roll
-      // it out in the method later
-      this->ensure_match = regex(n.second);
+      this->ensure_match = n.second;
     else
       throw invalid_argument(fmt::format("Unrecognized ping parameter \"{}\".", 
         n.first));
@@ -86,11 +83,17 @@ bool MonitorServiceWeb::IsAvailable() {
 
     if (response.getStatus() == this->status_equals) {
       // TODO: Test if we were passed a regex, and only then Grep it for things.
-      smatch m;
-      regex_search(response_content, m, this->ensure_match);
+      //smatch m;
+      //regex_search(response_content, m, regex(this->ensure_match));
 
-      for(auto v: m)
-        std::cout << "Match:" << v << std::endl;
+      auto re = regex(this->ensure_match);
+			auto words_begin = sregex_iterator(
+					response_content.begin(), response_content.end(), re);
+			auto words_end = sregex_iterator();
+
+			auto count =  distance(words_begin, words_end);
+
+      cout << "Count:" << count << endl;
 
       // TODO Ensure match with returen
 

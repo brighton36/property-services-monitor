@@ -79,7 +79,7 @@ class MonitorServiceWeb : public MonitorServiceBase {
   public:
     unsigned int port, status_equals;
     std::string path;
-    std::regex ensure_match;
+    std::string ensure_match;
 		bool isHttps;
 
     MonitorServiceWeb(std::string, PTR_UMAP_STR);
