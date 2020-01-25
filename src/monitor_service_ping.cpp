@@ -24,12 +24,16 @@ MonitorServicePing::MonitorServicePing(string address, PTR_UMAP_STR params)
 }
 
 bool MonitorServicePing::IsAvailable() {
+  MonitorServiceBase::IsAvailable();
+
   try {
     // The port does not matter at all. Not sure why the library makes us set it.
     auto socketAddress = Poco::Net::SocketAddress(this->address, "80");
 
     unsigned int successful_pings = Poco::Net::ICMPClient::ping(
       socketAddress, Poco::Net::IPAddress::IPv4, this->tries);
+
+    this->results->emplace("successful_pings", to_string(successful_pings));
 
     // TODO: Capture the successful_pings into result
     return (successful_pings > this->success_over);

@@ -69,10 +69,9 @@ string MonitorServiceWeb::HttXRequest(string path, Poco::Net::HTTPResponse &resp
 }
 
 bool MonitorServiceWeb::IsAvailable() {
+  MonitorServiceBase::IsAvailable();
 
 	try {
-    this->results->clear(); // TODO: put this in the parent... and set initial params there
-
 		Poco::Net::HTTPResponse response;
 
     string response_content = this->HttXRequest(this->path, response);
@@ -82,29 +81,23 @@ bool MonitorServiceWeb::IsAvailable() {
     this->results->emplace("response_content", response_content);
 
     if (response.getStatus() == this->status_equals) {
-      // TODO: Test if we were passed a regex, and only then Grep it for things.
-      //smatch m;
-      //regex_search(response_content, m, regex(this->ensure_match));
+      if (!this->ensure_match.empty()) {
+        auto re = regex(this->ensure_match);
 
-      auto re = regex(this->ensure_match);
-			auto words_begin = sregex_iterator(
-					response_content.begin(), response_content.end(), re);
-			auto words_end = sregex_iterator();
+        auto match_count = distance(
+            sregex_iterator( response_content.begin(), response_content.end(), re), 
+            sregex_iterator());
 
-			auto count =  distance(words_begin, words_end);
-
-      cout << "Count:" << count << endl;
-
-      // TODO Ensure match with returen
+        if ( match_count == 0 ) return  false;
+      }
 
       return true;
     }
     else 
-      // TODO: Capture the output status and code
       return false;
 	}
-	catch (Poco::Exception& exc) { 
-    cout << "Exception:" << exc.what() << endl;
+	catch (const exception& e) { 
+    this->results->emplace("failure_reason", e.what());
     return false; 
   }
 }

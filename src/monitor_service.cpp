@@ -9,5 +9,10 @@ MonitorServiceBase::MonitorServiceBase(string type, string address, PTR_UMAP_STR
   this->results = make_shared<unordered_map<string, string>>();
 }
 
-bool MonitorServiceBase::IsAvailable() { return false; }
+bool MonitorServiceBase::IsAvailable() { 
+  this->results->clear();
+  // TODO: Do we want to set each param here?
+
+  return false;
+}
 
