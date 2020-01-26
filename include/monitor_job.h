@@ -111,6 +111,7 @@ class SmtpNotifier {
   public:
     std::string host, username, password;
     unsigned int port;
+    bool isSSL;
 
     SmtpNotifier(PTR_UMAP_STR);
     SmtpNotifier() {};

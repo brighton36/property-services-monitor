@@ -35,7 +35,6 @@ bool MonitorServicePing::IsAvailable() {
 
     this->results->emplace("successful_pings", to_string(successful_pings));
 
-    // TODO: Capture the successful_pings into result
     return (successful_pings > this->success_over);
 
   } catch(const Poco::IOException& e) {

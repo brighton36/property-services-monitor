@@ -11,7 +11,7 @@ MonitorServiceBase::MonitorServiceBase(string type, string address, PTR_UMAP_STR
 
 bool MonitorServiceBase::IsAvailable() { 
   this->results->clear();
-  // TODO: Do we want to set each param here?
+  // TODO: Do we want to set each input param here?
 
   return false;
 }
