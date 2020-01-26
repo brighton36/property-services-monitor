@@ -85,8 +85,8 @@ bool MonitorServiceWeb::IsAvailable() {
         auto re = regex(this->ensure_match);
 
         auto match_count = distance(
-            sregex_iterator( response_content.begin(), response_content.end(), re), 
-            sregex_iterator());
+          sregex_iterator( response_content.begin(), response_content.end(), re), 
+          sregex_iterator());
 
         if ( match_count == 0 ) return  false;
       }

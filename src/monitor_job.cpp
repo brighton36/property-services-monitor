@@ -17,15 +17,24 @@ MonitorJob::MonitorJob(string path) {
     throw invalid_argument(fmt::format(MISSING_FIELD, "from"));
   if (!config["subject"]) 
     throw invalid_argument(fmt::format(MISSING_FIELD, "subject"));
-  if (!config["smtp_host"]) 
-    throw invalid_argument(fmt::format(MISSING_FIELD, "smtp_host"));
   if (!config["hosts"]) 
     throw invalid_argument(fmt::format(MISSING_FIELD, "hosts"));
 
   to = config["to"].as<string>();
   from = config["from"].as<string>();
-  smtp_host = config["smtp_host"].as<string>();
   subject = config["subject"].as<string>();
+
+	this->smtp_params = make_shared<unordered_map<string, string>>();
+  
+  if ( (!config["smtp"]) || (!config["smtp"].IsMap()))
+    throw invalid_argument(fmt::format("Smtp settings missing", "smtp"));
+
+  for(auto it=config["smtp"].begin();it!=config["smtp"].end();++it) {
+    const auto param = it->first.as<std::string>();
+    const auto value = it->second.as<std::string>();
+    
+    this->smtp_params->insert(make_pair(param, value));
+  }
 
   if (config["hosts"].size() < 1) throw invalid_argument("No Hosts to monitor."); 
   

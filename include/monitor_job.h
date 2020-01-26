@@ -7,6 +7,7 @@
 #include <fmt/ostream.h>
 
 #include "Poco/Net/HTTPResponse.h"
+#include "Poco/Net/MailMessage.h"
 
 #ifndef MONITOR_JOB_H
 #define MONITOR_JOB_H
@@ -99,9 +100,21 @@ class MonitorHost {
 
 class MonitorJob { 
   public: 
-    std::string config_path, to, from, smtp_host, subject;
+    std::string config_path, to, from, subject;
+    PTR_UMAP_STR smtp_params;
     std::vector<std::shared_ptr<MonitorHost>> hosts;
     MonitorJob(std::string);  
+    MonitorJob(){};  
 }; 
+
+class SmtpNotifier { 
+  public:
+    std::string host, username, password;
+    unsigned int port;
+
+    SmtpNotifier(PTR_UMAP_STR);
+    SmtpNotifier() {};
+    bool Send(Poco::Net::MailMessage *message);
+};
 
 #endif
