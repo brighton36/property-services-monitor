@@ -1,7 +1,11 @@
 #include "monitor_job.h"
+
 #include "yaml-cpp/yaml.h"
+
 #include "Poco/Net/NetException.h"
 #include "Poco/Net/MailRecipient.h"
+
+#include "inja.hpp"
 
 using namespace std;
 
@@ -44,8 +48,14 @@ int main(int argc, char* argv[]) {
     }
   }
 
+  // Compile the email template:
+  nlohmann::json data;
+  data["name"] = "world";
+  inja::render_to(std::cout, "Hello {{ name }}!", data); 
+
   // Send the email:
   try {
+
     string content = "Test Message";
 
     Poco::Net::MailMessage message;
@@ -56,14 +66,17 @@ int main(int argc, char* argv[]) {
     message.setContentType("text/plain; charset=UTF-8");
     message.setContent(content, Poco::Net::MailMessage::ENCODING_8BIT);
 
-    notifier.Send(&message);
+    // TODO :Get it working
+    // notifier.Send(&message);
   } catch (Poco::Net::SMTPException &e) {
+    // TODO: Clean this up with fmt anda macro:
     cout << e.code() << endl;
     cout << e.message() << endl;
     cout << e.what() << endl;
     cout << e.displayText().c_str() << endl;
   }
   catch (Poco::Net::NetException &e) {
+    // TODO: Clean this up with fmt anda macro:
     cout << e.code() << endl;
     cout << e.message() << endl;
     cout << e.what() << endl;
