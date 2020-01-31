@@ -35,10 +35,18 @@ bool MonitorServicePing::IsAvailable() {
 
     this->results->emplace("successful_pings", to_string(successful_pings));
 
-    return (successful_pings > this->success_over);
+    if (successful_pings > this->success_over) 
+      return true;
+    else {
+      // TODO: maybe we should have a fail() function that does this and returns false
+      this->results->emplace("failure_reason", 
+        fmt::format("{} out of the necessary {} pings received.", successful_pings,
+          this->success_over));
+      return false;
+    }
 
   } catch(const Poco::IOException& e) {
-    throw runtime_error("Executable must be suid root (and isnt), in order to ping");
+    this->results->emplace("failure_reason", e.what());
   }
 
   return false;

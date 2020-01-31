@@ -1,0 +1,41 @@
+<table width="100%" border="0" cellspacing="0" cellpadding="0">
+  <tr>
+    <td width="140" align="center" valign="top">
+			<img height="132" width="108" src="TODO" />
+		</td>
+    <td valign="top">
+      <h1>{{ h(subject) }}</h1>
+				{% if has_failures %}
+        <h2 class="color-failed">Network Status: Errors Encounted.</h2>
+        {% else %}
+        <h2 class="color-passed">Network Status: Online/Functional.</h2>
+        {% endif %}
+      <p style="font-color:#262626">Generated: 01/29/2020 13:00 UTC (TODO)</p>
+    </td>
+  </tr>
+</table>
+
+{% for host in hosts %}
+<h2><a class="nolink">{{ h(host.label) }}</a></h2>
+<p class='pad-bottom'>{{ h(host.description) }}</p>
+{% for service in host.services %}
+  {% if service.is_up %}
+    <p class="color-passed strong indent">{{ h(service.type) }}: Online/Functional.</li>
+    <p class="indent pad-bottom">
+      {% if service.type == "ping" %}
+        This indicates that the device is powered on, and visible to the network.
+      {% else if service.type == "web"  %}
+        This indicates that the device is accessible to web browsers.
+      {% else %}
+        (Unknown Service Type)
+      {% endif %}
+    </p>
+  {% else %}
+    <p class="color-failed strong indent">{{ h(service.type) }}: Errors Encountered.</li>
+    <p class="color-failed indent">Error(s) were found while scanning &quot;{{ h(host.address)}}&quot;</p>
+    <ul class="indent pad-bottom">
+      <li class="color-failed">{{ h(service.results.failure_reason) }}</li>
+    </ul>
+  {% endif %}
+{% endfor %}
+{% endfor %}

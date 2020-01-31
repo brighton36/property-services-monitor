@@ -80,7 +80,9 @@ bool MonitorServiceWeb::IsAvailable() {
     this->results->emplace("response_reason", response.getReason());
     this->results->emplace("response_content", response_content);
 
-    if (response.getStatus() == this->status_equals) {
+    auto status_code = response.getStatus();
+
+    if (status_code == this->status_equals) {
       if (!this->ensure_match.empty()) {
         auto re = regex(this->ensure_match);
 
@@ -88,13 +90,23 @@ bool MonitorServiceWeb::IsAvailable() {
           sregex_iterator( response_content.begin(), response_content.end(), re), 
           sregex_iterator());
 
-        if ( match_count == 0 ) return  false;
+        this->results->emplace("response_match_count", to_string(match_count));
+
+        if ( match_count == 0 ) {
+          this->results->emplace("failure_reason", 
+            fmt::format("Unable to find {} in content response", this->ensure_match));
+          return  false;
+        }
       }
 
       return true;
     }
-    else 
+    else {
+      this->results->emplace("failure_reason", 
+        fmt::format("Server status code {} did not match the expected {} status code.", 
+          status_code, this->status_equals));
       return false;
+    }
 	}
 	catch (const exception& e) { 
     this->results->emplace("failure_reason", e.what());

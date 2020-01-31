@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta content='text/html; charset=UTF-8' http-equiv='Content-Type' />
+  <style>
+    body {
+      font-family:'Google Sans',Roboto,RobotoDraft,Helvetica; 
+      font-size:14px; 
+      line-height:18px; 
+      font-color:{{text_color}};
+    }
+
+    h1 { 
+      display: block;
+      margin: 0 0 0 0;
+      font-color:{{text_color}};
+    }
+
+    h2 { 
+      display: block;
+      margin: 0 0 0 0;
+      font-color:{{text_color}};
+    }
+
+    h3 { 
+      display: block;
+      margin: 0.8em 0 0 0;
+      font-color:{{text_color}};
+    }
+
+    h4 { 
+      font-size:16px; 
+      line-height:28px; 
+      font-color:{{text_color}};
+      display: block;
+      margin: 0.8em 0 0 0;
+      padding: 0;
+    }
+
+    p {
+      display: block;
+      margin: 0;
+      padding: 0;
+    }
+
+    ul {
+      display: block;
+      margin: 0;
+      padding: 0;
+    }
+
+    .results-table td, .results-table th {
+      padding: 3px 6px 3px 6px; 
+      color: {{text_color}};
+    }
+    .results-table tr.header-row th {
+      background-color: #897961;
+      color: #fef6eb;
+      font-weight: normal;
+    }
+    .results-table tr {
+      background-color: #FEF6EB
+    }
+    .results-table tr.alt {
+      background-color: #D0C4B2;
+    }
+
+    .color-passed {
+      color: #3F5C53;
+    }
+    .color-failed {
+      color: #802829;
+    }
+    .color-notice {
+      color:#494661;
+    }
+
+    .strong{
+      font-weight: bold;
+    }
+
+    .indent { margin-left: 2em; }
+    .pad-bottom { margin-bottom: 0.8em; }
+
+    /* This fixes the gmail blue-color auto-linking ... feature. */
+    .nolink { 
+      color:{{text_color}}!important; 
+      text-decoration:none!important;
+    }
+    
+  </style>
+  </head>
+  <body>
+    <table width="100%" border="0" cellspacing="0" cellpadding="0">
+      <tr>
+        <td>
+          <table bgcolor="{{margin_color}}" width="100%" border="0" cellspacing="10" cellpadding="0">
+            <tr>
+              <td>
+                <table bgcolor="{{border_color}}" width="100%" border="0" cellspacing="3" cellpadding="0">
+                  <tr>
+                    <td>
+                      <table bgcolor="{{body_color}}" width="100%" border="0" cellspacing="0" cellpadding="20">
+                        <tr>
+                          <td>{% include "notify_body.html.inja" %}</td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

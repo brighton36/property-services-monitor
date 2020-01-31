@@ -8,6 +8,11 @@
 #include "Poco/Net/SSLManager.h"
 #include "Poco/Net/SecureStreamSocket.h"
 
+#include <Poco/Net/StringPartSource.h>
+#include <Poco/Net/FilePartSource.h>
+#include <Poco/Net/MailMessage.h>
+#include <Poco/Net/MediaType.h>
+
 using namespace std;
 using namespace Poco::Net;
 
@@ -47,7 +52,7 @@ SmtpNotifier::SmtpNotifier(PTR_UMAP_STR params) {
     throw invalid_argument(fmt::format("Smtp host was unspecified, and is required."));
 }
 
-bool SmtpNotifier::Send(MailMessage *message) {
+bool SmtpNotifier::DeliverMessage(MailMessage *message) {
   if (this->isSSL) {
     Poco::SharedPtr<InvalidCertificateHandler> pCert = new AcceptCertificateHandler(false);
     Context::Ptr pContext = new Context(Context::CLIENT_USE, "", "", "", 
@@ -84,3 +89,63 @@ bool SmtpNotifier::Send(MailMessage *message) {
 
   return true;
 }
+
+// TODO: make job_results a pointer?
+bool SmtpNotifier::SendResults(nlohmann::json job_results) {
+  cout << "from:" << job_results["from"] << endl;
+  // Compile the email :
+	Poco::Net::MailMessage message;
+	message.setSender(job_results["from"]); // TODO: move from to the constructor
+	message.addRecipient(
+		Poco::Net::MailRecipient(Poco::Net::MailRecipient::PRIMARY_RECIPIENT, 
+    job_results["to"])); // TODO: move to to the constructor
+	message.setSubject(job_results["subject"]);
+
+  cout << "subject:" << job_results["subject"] << endl;
+/* //TODO
+	string notification_in_plain = "TODO: plain";
+	message.setContentType("text/plain; charset=UTF-8");
+	message.setContent(notification_in_plain, Poco::Net::MailMessage::ENCODING_8BIT);
+*/
+
+  inja::Environment env;
+	
+	env.add_callback("h", 1, [](inja::Arguments& args) {
+    string ret;
+		string s = args.at(0)->get<string>();
+
+    ret.reserve(s.size());
+    for(size_t pos = 0; pos != s.size(); ++pos) {
+			switch(s[pos]) {
+				case '&':  ret.append("&amp;");    break;
+				case '\"': ret.append("&quot;");   break;
+				case '\'': ret.append("&apos;");   break;
+				case '<':  ret.append("&lt;");     break;
+				case '>':  ret.append("&gt;");     break;
+				default:   ret.append(&s[pos], 1); break;
+			}
+    }
+
+		return ret;
+	});
+
+  cout << "template:" << job_results["template_html"] << endl;
+  auto notification_in_html = env.render_file(job_results["template_html"], job_results);
+	Poco::Net::MediaType mediaType("multipart", "related");
+	mediaType.setParameter("type", "text/html");
+	message.setContentType(mediaType);
+
+	message.addPart("", new Poco::Net::StringPartSource(notification_in_html, "text/html"), 
+    Poco::Net::MailMessage::CONTENT_INLINE, 
+      Poco::Net::MailMessage::ENCODING_QUOTED_PRINTABLE);
+
+  /* // TODO
+Poco::Net::FilePartSource *image = new Poco::Net::FilePartSource("image.jpg", "image/jpeg");
+image->headers().add("Content-ID", "<image>");
+message.addPart("", image, CONTENT_INLINE, ENCODING_BASE64);
+  tmpl_data["name"] = "world";
+*/
+
+  return this->DeliverMessage(&message);
+}
+

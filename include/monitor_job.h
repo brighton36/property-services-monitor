@@ -9,6 +9,8 @@
 #include "Poco/Net/HTTPResponse.h"
 #include "Poco/Net/MailMessage.h"
 
+#include "inja.hpp"
+
 #ifndef MONITOR_JOB_H
 #define MONITOR_JOB_H
 
@@ -92,19 +94,23 @@ class MonitorServiceWeb : public MonitorServiceBase {
 
 class MonitorHost { 
   public:
-    std::string label, address;
+    std::string label, description, address;
     std::vector<std::shared_ptr<MonitorServiceBase>> services;
-    MonitorHost(std::string label, std::string, 
+    MonitorHost(std::string, std::string, std::string,
       std::vector<std::shared_ptr<MonitorServiceBase>>);
 };
 
 class MonitorJob { 
   public: 
     std::string config_path, to, from, subject;
+    std::string template_html_path, template_plain_path;
     PTR_UMAP_STR smtp_params;
     std::vector<std::shared_ptr<MonitorHost>> hosts;
     MonitorJob(std::string);  
     MonitorJob(){};  
+    nlohmann::json ToJson();  
+  private:
+    bool PathIsReadable(std::string);
 }; 
 
 class SmtpNotifier { 
@@ -115,7 +121,8 @@ class SmtpNotifier {
 
     SmtpNotifier(PTR_UMAP_STR);
     SmtpNotifier() {};
-    bool Send(Poco::Net::MailMessage *message);
+    bool SendResults(nlohmann::json);
+    bool DeliverMessage(Poco::Net::MailMessage *message);
 };
 
 #endif

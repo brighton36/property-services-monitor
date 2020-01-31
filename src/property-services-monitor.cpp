@@ -5,8 +5,6 @@
 #include "Poco/Net/NetException.h"
 #include "Poco/Net/MailRecipient.h"
 
-#include "inja.hpp"
-
 using namespace std;
 
 MonitorServiceFactory::map_type * MonitorServiceFactory::map = nullptr;
@@ -17,10 +15,10 @@ int main(int argc, char* argv[]) {
     return 1;
   }
 
-  // Initialize objects, verify the config :
   MonitorJob job;
   SmtpNotifier notifier;
 
+  // Verify the config :
   try {
     job = MonitorJob(string(argv[1]));
     notifier = SmtpNotifier(job.smtp_params);
@@ -35,39 +33,25 @@ int main(int argc, char* argv[]) {
     return 1;
   }
 
-  // Now run our tests:
+  // TODO: What to do about these outputs...
+  // let's parse them from the json
   fmt::print("To  : {} \nFrom: {}\n", job.to, job.from);
-
   for (const auto host: job.hosts) {
     fmt::print("  * Host: {} ({})\n", host->label, host->address);
-
     for(const auto service: host->services) {
-      const auto is_up = service->IsAvailable(); 
-
-      fmt::print("    * {} : {}\n", service->type, is_up ? "OK" : "FAIL");
+      bool is_available = service->IsAvailable();
+      // TODO: Why does this not match the email...
+      fmt::print("    * {} : {}\n", service->type, is_available ? "OK" : "FAIL");
     }
   }
 
-  // Compile the email template:
-  nlohmann::json data;
-  data["name"] = "world";
-  inja::render_to(std::cout, "Hello {{ name }}!", data); 
+  // Build Output:
+  auto tmpl_data = job.ToJson();
 
   // Send the email:
   try {
-
-    string content = "Test Message";
-
-    Poco::Net::MailMessage message;
-    message.setSender(job.from);
-    message.addRecipient(
-      Poco::Net::MailRecipient(Poco::Net::MailRecipient::PRIMARY_RECIPIENT, job.to));
-    message.setSubject(job.subject);
-    message.setContentType("text/plain; charset=UTF-8");
-    message.setContent(content, Poco::Net::MailMessage::ENCODING_8BIT);
-
     // TODO :Get it working
-    // notifier.Send(&message);
+    notifier.SendResults(tmpl_data);
   } catch (Poco::Net::SMTPException &e) {
     // TODO: Clean this up with fmt anda macro:
     cout << e.code() << endl;
