@@ -5,6 +5,9 @@
 #include <unordered_map> 
 #include <map> 
 #include <fmt/ostream.h>
+#include <filesystem>
+
+#include "yaml-cpp/yaml.h"
 
 #include "Poco/Net/HTTPResponse.h"
 #include "Poco/Net/MailMessage.h"
@@ -21,6 +24,7 @@
 #endif
 
 #define PTR_UMAP_STR std::shared_ptr<std::unordered_map<std::string, std::string>>
+#define MISSING_FIELD "Missing \"{}\" field."
 
 class MonitorServiceBase { 
   public:
@@ -102,27 +106,25 @@ class MonitorHost {
 
 class MonitorJob { 
   public: 
-    std::string config_path, to, from, subject;
-    std::string template_html_path, template_plain_path;
-    PTR_UMAP_STR smtp_params;
     std::vector<std::shared_ptr<MonitorHost>> hosts;
-    MonitorJob(std::string);  
+    MonitorJob(const YAML::Node);  
     MonitorJob(){};  
     nlohmann::json ToJson();  
-  private:
-    bool PathIsReadable(std::string);
 }; 
 
 class SmtpNotifier { 
   public:
-    std::string host, username, password;
+    std::string to, from, subject, host, username, password;
+    std::string base_path, template_html_path, template_plain_path;
     unsigned int port;
     bool isSSL;
 
-    SmtpNotifier(PTR_UMAP_STR);
+    SmtpNotifier(std::string, const YAML::Node);
     SmtpNotifier() {};
-    bool SendResults(nlohmann::json);
+    bool SendResults(nlohmann::json*);
     bool DeliverMessage(Poco::Net::MailMessage *message);
+  private:
+    bool PathIsReadable(std::string);
 };
 
 #endif

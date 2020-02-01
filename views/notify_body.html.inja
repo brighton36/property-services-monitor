@@ -1,7 +1,7 @@
 <table width="100%" border="0" cellspacing="0" cellpadding="0">
   <tr>
     <td width="140" align="center" valign="top">
-			<img height="132" width="108" src="TODO" />
+			<img height="132" width="108" src="cid:5e3424ee3db63_3c12aad4eea05bc88574@hostname.mail" />
 		</td>
     <td valign="top">
       <h1>{{ h(subject) }}</h1>

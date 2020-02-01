@@ -1,70 +1,15 @@
 #include "monitor_job.h"
 #include "yaml-cpp/yaml.h"
 
-#include <filesystem>
-
 using namespace std;
 
-#define MISSING_FIELD "Missing \"{}\" field."
 #define MISSING_HOST_FIELD "Missing {} for host \"{}\"."
-#define CANT_READ "Unable to open file {}."
 
-bool MonitorJob::PathIsReadable(string path) {
-	filesystem::path p(path);
+MonitorJob::MonitorJob(const YAML::Node config) {
 
-	error_code ec;
-	auto perms = filesystem::status(p, ec).permissions();
-
-	return ( (ec.value() == 0) && (
-    (perms & filesystem::perms::owner_read) != filesystem::perms::none &&
-    (perms & filesystem::perms::group_read) != filesystem::perms::none &&
-    (perms & filesystem::perms::others_read) != filesystem::perms::none ) );
-}
-
-MonitorJob::MonitorJob(string path) {
-  config_path = path;
-
-  const auto config = YAML::LoadFile(config_path);
-
-  if (!config["to"]) 
-    throw invalid_argument(fmt::format(MISSING_FIELD, "to"));
-  if (!config["from"]) 
-    throw invalid_argument(fmt::format(MISSING_FIELD, "from"));
-  if (!config["subject"]) 
-    throw invalid_argument(fmt::format(MISSING_FIELD, "subject"));
-  if (!config["hosts"]) 
-    throw invalid_argument(fmt::format(MISSING_FIELD, "hosts"));
-  if (!config["template_html"]) 
-    throw invalid_argument(fmt::format(MISSING_FIELD, "template_html"));
-  if (!config["template_plain"]) 
-    throw invalid_argument(fmt::format(MISSING_FIELD, "template_plain"));
-
-  to = config["to"].as<string>();
-  from = config["from"].as<string>();
-  subject = config["subject"].as<string>();
-  template_html_path = config["template_html"].as<string>();
-  template_plain_path = config["template_plain"].as<string>();
-
-  if (!PathIsReadable(template_html_path)) 
-    throw invalid_argument(fmt::format(CANT_READ, template_html_path));
-  if (!PathIsReadable(template_plain_path)) 
-    throw invalid_argument(fmt::format(CANT_READ, template_plain_path));
-
-	this->smtp_params = make_shared<unordered_map<string, string>>();
+  if (config.size() < 1) throw invalid_argument("No Hosts to monitor."); 
   
-  if ( (!config["smtp"]) || (!config["smtp"].IsMap()))
-    throw invalid_argument(fmt::format("Smtp settings missing", "smtp"));
-
-  for(auto it=config["smtp"].begin();it!=config["smtp"].end();++it) {
-    const auto param = it->first.as<std::string>();
-    const auto value = it->second.as<std::string>();
-    
-    this->smtp_params->insert(make_pair(param, value));
-  }
-
-  if (config["hosts"].size() < 1) throw invalid_argument("No Hosts to monitor."); 
-  
-  for (const auto config_host: config["hosts"]) {
+  for (const auto config_host: config) {
     if (!config_host["label"]) 
       throw invalid_argument("One or more hosts are missing a label.");
 
@@ -124,21 +69,8 @@ MonitorJob::MonitorJob(string path) {
 nlohmann::json MonitorJob::ToJson() {
   nlohmann::json ret;
 
-  // TODO: These should go in the yaml...
-  ret["text_color"] = "#0D1B1E";
-  ret["margin_color"] = "#C3DBC5";
-  ret["border_color"] = "#7798AB";
-  ret["body_color"] = "#E8DCB9";
-  ret["alert_color"] = "#F2CEE6";
-
-  // TODO: I think most/all of this should go into the smtp object
-  ret["to"] = this->to;
-  ret["from"] = this->from;
-  ret["subject"] = this->subject;
-  ret["hosts"] = nlohmann::json::array();
-  ret["template_html"] = this->template_html_path;
   ret["has_failures"] = false;
-  // /TODO
+	ret["hosts"] = nlohmann::json::array();
 
   for (const auto host: this->hosts) {
     auto json_host = nlohmann::json::object();

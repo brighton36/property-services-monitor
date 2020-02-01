@@ -13,47 +13,80 @@
 #include <Poco/Net/MailMessage.h>
 #include <Poco/Net/MediaType.h>
 
+#define CANT_READ "Unable to open file {}."
+
 using namespace std;
 using namespace Poco::Net;
 
-SmtpNotifier::SmtpNotifier(PTR_UMAP_STR params) {
-  this->isSSL = false;
-  this->host = string();
-  this->port = 0;
-  this->username = string();
-  this->password = string();
+SmtpNotifier::SmtpNotifier(string tpath, const YAML::Node config) {
 
-  for( const auto& n : *params )
-    if ("proto" == n.first) {
-			if (n.second == "plain")
-				this->isSSL = false;
-      else if (n.second == "ssl")
-				this->isSSL = true;
-			else
-				throw invalid_argument(fmt::format("Unrecognized smtp proto \"{}\".", 
-					n.second));
-    }
-    else if ("host" == n.first)
-      this->host = n.second;
-    else if ("port" == n.first)
-      this->port = stoi(n.second);
-    else if ("username" == n.first)
-      this->username = n.second;
-    else if ("password" == n.first)
-      this->password = n.second;
-    else
-      throw invalid_argument(fmt::format("Unrecognized smtp parameter \"{}\".", 
-        n.first));
+  if (!config["to"]) 
+    throw invalid_argument(fmt::format(MISSING_FIELD, "to"));
+  if (!config["from"]) 
+    throw invalid_argument(fmt::format(MISSING_FIELD, "from"));
+  if (!config["subject"]) 
+    throw invalid_argument(fmt::format(MISSING_FIELD, "subject"));
+  if (!config["template_html"]) 
+    throw invalid_argument(fmt::format(MISSING_FIELD, "template_html"));
+  if (!config["template_plain"]) 
+    throw invalid_argument(fmt::format(MISSING_FIELD, "template_plain"));
+  if (!config["host"]) 
+    throw invalid_argument(fmt::format(MISSING_FIELD, "host"));
 
-  if (this->port == 0) this->port = (this->isSSL) ? 465 : 25;
+  base_path = tpath;
+  to = config["to"].as<string>();
+  from = config["from"].as<string>();
+  subject = config["subject"].as<string>();
+  template_html_path = config["template_html"].as<string>();
+  template_plain_path = config["template_plain"].as<string>();
 
-  // Check for missing params:
-  if (this->host.empty())
-    throw invalid_argument(fmt::format("Smtp host was unspecified, and is required."));
+  if (filesystem::path(template_html_path).is_relative())
+    template_html_path = fmt::format("{}/{}", base_path, template_html_path);
+
+  if (filesystem::path(template_plain_path).is_relative())
+    template_plain_path = fmt::format("{}/{}", base_path, template_plain_path);
+
+  if (!PathIsReadable(template_html_path)) 
+    throw invalid_argument(fmt::format(CANT_READ, template_html_path));
+  if (!PathIsReadable(template_plain_path)) 
+    throw invalid_argument(fmt::format(CANT_READ, template_plain_path));
+
+  host = config["host"].as<string>();
+  isSSL = false;
+  port = 0;
+  username = string();
+  password = string();
+
+  if (config["port"]) port = stoi(config["port"].as<string>());
+  if (config["username"]) username = config["username"].as<string>();
+  if (config["password"]) password = config["password"].as<string>();
+  if (config["proto"]) {
+    auto proto = config["proto"].as<string>();
+
+    if (proto == "plain") isSSL = false;
+    else if (proto == "ssl") isSSL = true;
+    else throw invalid_argument(fmt::format("Unrecognized smtp proto \"{}\".", proto));
+  }
+  
+  if (port == 0) port = (isSSL) ? 465 : 25;
+
+  // TODO: Do a template section like this:
+	/*
+	this->smtp_params = make_shared<unordered_map<string, string>>();
+  
+  if ( (!config["smtp"]) || (!config["smtp"].IsMap()))
+    throw invalid_argument(fmt::format("Smtp settings missing", "smtp"));
+
+  for(auto it=config["smtp"].begin();it!=config["smtp"].end();++it) {
+    const auto param = it->first.as<std::string>();
+    const auto value = it->second.as<std::string>();
+    
+    this->smtp_params->insert(make_pair(param, value));
+  }*/
 }
 
 bool SmtpNotifier::DeliverMessage(MailMessage *message) {
-  if (this->isSSL) {
+  if (isSSL) {
     Poco::SharedPtr<InvalidCertificateHandler> pCert = new AcceptCertificateHandler(false);
     Context::Ptr pContext = new Context(Context::CLIENT_USE, "", "", "", 
       Context::VERIFY_NONE, 9, false, "ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
@@ -61,15 +94,15 @@ bool SmtpNotifier::DeliverMessage(MailMessage *message) {
     SSLManager::instance().initializeClient(0, pCert, pContext);
 
     SecureStreamSocket pSSLSocket(pContext);
-    pSSLSocket.connect(SocketAddress(this->host, this->port));
+    pSSLSocket.connect(SocketAddress(host, port));
     SecureSMTPClientSession session(pSSLSocket);
 
     session.login();
-		if (!this->username.empty() && !this->password.empty()) {
+		if (!username.empty()) {
       // NOTE: The TLS May fail, or may succeed. It seems like there's no reason 
       // not to try if we're already SSL encrypted.
 			session.startTLS(pContext);
-			session.login(SMTPClientSession::AUTH_LOGIN, this->username, this->password);
+			session.login(SMTPClientSession::AUTH_LOGIN, username, password);
 		}
 
     session.sendMessage(*message);
@@ -77,12 +110,11 @@ bool SmtpNotifier::DeliverMessage(MailMessage *message) {
   } else {
     // NOTE: This code path is untested. My ISP blocks outbound port 25, and I
     // don't really care to spend the time testing this.
-		SMTPClientSession session(this->host, this->port); 
+		SMTPClientSession session(host, port); 
 
 		session.login();
-		if (!this->username.empty() && !this->password.empty()) {
-			session.login(SMTPClientSession::AUTH_LOGIN, this->username, this->password);
-		}
+		if (!username.empty())
+			session.login(SMTPClientSession::AUTH_LOGIN, username, password);
 		session.sendMessage(*message);
 		session.close();
   }
@@ -90,18 +122,30 @@ bool SmtpNotifier::DeliverMessage(MailMessage *message) {
   return true;
 }
 
-// TODO: make job_results a pointer?
-bool SmtpNotifier::SendResults(nlohmann::json job_results) {
-  cout << "from:" << job_results["from"] << endl;
+bool SmtpNotifier::SendResults(nlohmann::json *results) {
+  auto tmpl = *results;
+
+  // TODO: These should go in the yaml under a template: section...
+  // TODO: Add a thumbnail here. And if these aren't specified, they should default
+  // to something in the template...
+  tmpl["text_color"] = "#0D1B1E";
+  tmpl["margin_color"] = "#C3DBC5";
+  tmpl["border_color"] = "#7798AB";
+  tmpl["body_color"] = "#E8DCB9";
+  tmpl["alert_color"] = "#F2CEE6";
+
+  tmpl["to"] = to;
+  tmpl["from"] = from;
+  tmpl["subject"] = subject;
+  tmpl["template_html"] = template_html_path;
+
   // Compile the email :
 	Poco::Net::MailMessage message;
-	message.setSender(job_results["from"]); // TODO: move from to the constructor
+	message.setSender(from);
 	message.addRecipient(
-		Poco::Net::MailRecipient(Poco::Net::MailRecipient::PRIMARY_RECIPIENT, 
-    job_results["to"])); // TODO: move to to the constructor
-	message.setSubject(job_results["subject"]);
+		Poco::Net::MailRecipient(Poco::Net::MailRecipient::PRIMARY_RECIPIENT, to));
+	message.setSubject(subject); // TODO: run the tmpl lib here
 
-  cout << "subject:" << job_results["subject"] << endl;
 /* //TODO
 	string notification_in_plain = "TODO: plain";
 	message.setContentType("text/plain; charset=UTF-8");
@@ -129,8 +173,8 @@ bool SmtpNotifier::SendResults(nlohmann::json job_results) {
 		return ret;
 	});
 
-  cout << "template:" << job_results["template_html"] << endl;
-  auto notification_in_html = env.render_file(job_results["template_html"], job_results);
+  auto notification_in_html = env.render_file(template_html_path, tmpl);
+
 	Poco::Net::MediaType mediaType("multipart", "related");
 	mediaType.setParameter("type", "text/html");
 	message.setContentType(mediaType);
@@ -139,13 +183,25 @@ bool SmtpNotifier::SendResults(nlohmann::json job_results) {
     Poco::Net::MailMessage::CONTENT_INLINE, 
       Poco::Net::MailMessage::ENCODING_QUOTED_PRINTABLE);
 
-  /* // TODO
-Poco::Net::FilePartSource *image = new Poco::Net::FilePartSource("image.jpg", "image/jpeg");
-image->headers().add("Content-ID", "<image>");
-message.addPart("", image, CONTENT_INLINE, ENCODING_BASE64);
-  tmpl_data["name"] = "world";
-*/
+  // TODO: This should be inside add_callback
+  Poco::Net::FilePartSource *image = new Poco::Net::FilePartSource(
+    "views/images/home.jpg", "image/jpeg");
+  image->headers().add("Content-ID", "<5e3424ee3db63_3c12aad4eea05bc88574@hostname.mail>");
+  message.addPart("home.jpg", image, Poco::Net::MailMessage::CONTENT_ATTACHMENT, 
+    Poco::Net::MailMessage::ENCODING_BASE64);
 
-  return this->DeliverMessage(&message);
+  return DeliverMessage(&message);
 }
 
+
+bool SmtpNotifier::PathIsReadable(string path) {
+	filesystem::path p(path);
+
+	error_code ec;
+	auto perms = filesystem::status(p, ec).permissions();
+
+	return ( (ec.value() == 0) && (
+    (perms & filesystem::perms::owner_read) != filesystem::perms::none &&
+    (perms & filesystem::perms::group_read) != filesystem::perms::none &&
+    (perms & filesystem::perms::others_read) != filesystem::perms::none ) );
+}

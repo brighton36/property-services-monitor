@@ -1,7 +1,5 @@
 #include "monitor_job.h"
 
-#include "yaml-cpp/yaml.h"
-
 #include "Poco/Net/NetException.h"
 #include "Poco/Net/MailRecipient.h"
 
@@ -17,11 +15,24 @@ int main(int argc, char* argv[]) {
 
   MonitorJob job;
   SmtpNotifier notifier;
+  string base_path;
 
-  // Verify the config :
+  // Load and Verify the config :
   try {
-    job = MonitorJob(string(argv[1]));
-    notifier = SmtpNotifier(job.smtp_params);
+    const auto config_path = string(argv[1]);
+    const auto config = YAML::LoadFile(config_path);
+
+    base_path = filesystem::path(filesystem::canonical(config_path)).parent_path();
+
+
+    if (!config["hosts"]) 
+      throw invalid_argument(fmt::format(MISSING_FIELD, "hosts"));
+
+    if (!config["notification"]) 
+      throw invalid_argument(fmt::format(MISSING_FIELD, "notification"));
+
+    job = MonitorJob(config["hosts"]);
+    notifier = SmtpNotifier(base_path, config["notification"]);
   } catch(const YAML::Exception& e) {
     fmt::print(cerr, "YAML Exception: {}\n", e.what());
     return 1;
@@ -33,38 +44,34 @@ int main(int argc, char* argv[]) {
     return 1;
   }
 
-  // TODO: What to do about these outputs...
-  // let's parse them from the json
-  fmt::print("To  : {} \nFrom: {}\n", job.to, job.from);
-  for (const auto host: job.hosts) {
-    fmt::print("  * Host: {} ({})\n", host->label, host->address);
-    for(const auto service: host->services) {
-      bool is_available = service->IsAvailable();
-      // TODO: Why does this not match the email...
-      fmt::print("    * {} : {}\n", service->type, is_available ? "OK" : "FAIL");
-    }
-  }
-
   // Build Output:
   auto tmpl_data = job.ToJson();
 
+  // TODO: We may want to just dump the text template from the job()
+  fmt::print("To  : {} \nFrom: {}\n", notifier.to, notifier.from);
+
+  for (auto& host : tmpl_data["hosts"].items()) {
+    auto host_values = host.value();
+    fmt::print("  * Host: {} ({})\n", host_values["label"], host_values["address"]);
+    for (auto& service : host_values["services"].items()) {
+      auto service_values = service.value();
+      fmt::print("    * {} : {}\n", service_values["type"], 
+        (service_values["is_up"]) ? "OK" : "FAIL");
+    }
+  }
+
   // Send the email:
   try {
-    // TODO :Get it working
-    notifier.SendResults(tmpl_data);
+    notifier.SendResults(&tmpl_data);
   } catch (Poco::Net::SMTPException &e) {
-    // TODO: Clean this up with fmt anda macro:
-    cout << e.code() << endl;
-    cout << e.message() << endl;
-    cout << e.what() << endl;
-    cout << e.displayText().c_str() << endl;
+    fmt::print(cerr, "SMTP Exception Encountered: {} {} {} {}\n", 
+      e.code(), e.what(), e.message(), e.displayText().c_str() );
+    return 1;
   }
   catch (Poco::Net::NetException &e) {
-    // TODO: Clean this up with fmt anda macro:
-    cout << e.code() << endl;
-    cout << e.message() << endl;
-    cout << e.what() << endl;
-    cout << e.displayText().c_str() << endl;
+    fmt::print(cerr, "Net Exception Encountered: {} {} {} {}\n", 
+      e.code(), e.what(), e.message(), e.displayText().c_str() );
+    return 1;
   }
     
   return 0;
