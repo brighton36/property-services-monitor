@@ -1,5 +1,7 @@
 #include "monitor_job.h"
 
+#include "fmt/printf.h"
+
 #include "Poco/Net/MailRecipient.h"
 #include "Poco/Net/SMTPClientSession.h"
 #include "Poco/Net/SecureSMTPClientSession.h"
@@ -118,32 +120,10 @@ bool NotifierSmtp::DeliverMessage(MailMessage *message) {
   return true;
 }
 
-bool NotifierSmtp::SendResults(nlohmann::json *results) {
-  auto tmpl = *results;
+unique_ptr<inja::Environment> NotifierSmtp::GetInjaEnv() {
+  unique_ptr<inja::Environment> env(new inja::Environment);
 
-  for (auto param : *parameters) 
-    tmpl[param.first] = param.second;
-
-  tmpl["to"] = to;
-  tmpl["from"] = from;
-  tmpl["subject"] = subject;
-
-  // Compile the email :
-	Poco::Net::MailMessage message;
-	message.setSender(from);
-	message.addRecipient(
-		Poco::Net::MailRecipient(Poco::Net::MailRecipient::PRIMARY_RECIPIENT, to));
-	message.setSubject(subject); // TODO: run the tmpl lib here
-
-/* //TODO
-	string notification_in_plain = "TODO: plain";
-	message.setContentType("text/plain; charset=UTF-8");
-	message.setContent(notification_in_plain, Poco::Net::MailMessage::ENCODING_8BIT);
-*/
-
-  inja::Environment env;
-	
-	env.add_callback("h", 1, [](inja::Arguments& args) {
+	env->add_callback("h", 1, [](inja::Arguments& args) {
     string ret;
 		string s = args.at(0)->get<string>();
 
@@ -162,22 +142,93 @@ bool NotifierSmtp::SendResults(nlohmann::json *results) {
 		return ret;
 	});
 
-  auto notification_in_html = env.render_file(template_html_path, tmpl);
+	env->add_callback("f", 2, [](inja::Arguments& args) {
+		string formatter = args.at(0)->get<string>();
+    auto p = args.at(1);
+    
+    string ret;
 
-	Poco::Net::MediaType mediaType("multipart", "related");
+    switch ( p->type() ) {
+      case nlohmann::json::value_t::string : 
+        ret = fmt::sprintf(formatter, p->get<string>());
+        break;
+      case nlohmann::json::value_t::number_unsigned : 
+        ret = fmt::sprintf(formatter, p->get<unsigned int>());
+        break;
+      case nlohmann::json::value_t::number_integer : 
+        ret = fmt::sprintf(formatter, p->get<int>());
+        break;
+      case nlohmann::json::value_t::number_float : 
+        ret = fmt::sprintf(formatter, p->get<float>());
+        break;
+      case nlohmann::json::value_t::boolean : 
+        ret = fmt::sprintf(formatter, p->get<bool>());
+        break;
+      default: 
+        inja::inja_throw("render_error", "Unrecognized value type passed to f()");
+    }
+
+    return ret; 
+  });
+  
+  return env;
+}
+
+bool NotifierSmtp::SendResults(nlohmann::json *results) {
+  auto tmpl = *results;
+
+  for (auto param : *parameters) tmpl[param.first] = param.second;
+
+  tmpl["to"] = to;
+  tmpl["from"] = from;
+  tmpl["subject"] = subject;
+
+  auto unix_now = time(nullptr);
+  auto local_now = localtime( &unix_now );
+
+  tmpl["now"] = nlohmann::json::object();
+  tmpl["now"]["sec"]   = local_now->tm_sec;
+  tmpl["now"]["min"]   = local_now->tm_min;
+  tmpl["now"]["hour"]  = local_now->tm_hour;
+  tmpl["now"]["mday"]  = local_now->tm_mday;
+  tmpl["now"]["mon"]   = (1+local_now->tm_mon);
+  tmpl["now"]["year"]  = (1900+local_now->tm_year);
+  tmpl["now"]["wday"]  = local_now->tm_wday;
+  tmpl["now"]["yday"]  = local_now->tm_yday;
+  tmpl["now"]["isdst"] = local_now->tm_isdst;
+  tmpl["now"]["zone"]  = local_now->tm_zone;
+
+  // Compile the email :
+	MailMessage message;
+	message.setSender(from);
+	message.addRecipient(
+		MailRecipient(MailRecipient::PRIMARY_RECIPIENT, to));
+
+  auto inja = GetInjaEnv();
+
+  cout << "Sizeof env:" << sizeof(inja) << endl;
+
+	message.setSubject(subject); // TODO: run the tmpl lib here
+
+  auto notification_in_html = inja->render_file(template_html_path, tmpl);
+  auto notification_in_plain = inja->render_file(template_plain_path, tmpl);
+
+	message.setContentType("text/plain; charset=UTF-8");
+	message.setContent(notification_in_plain, MailMessage::ENCODING_8BIT);
+
+	MediaType mediaType("multipart", "related");
 	mediaType.setParameter("type", "text/html");
 	message.setContentType(mediaType);
 
-	message.addPart("", new Poco::Net::StringPartSource(notification_in_html, "text/html"), 
-    Poco::Net::MailMessage::CONTENT_INLINE, 
-      Poco::Net::MailMessage::ENCODING_QUOTED_PRINTABLE);
+	message.addPart("", new StringPartSource(notification_in_html, "text/html"), 
+    MailMessage::CONTENT_INLINE, MailMessage::ENCODING_QUOTED_PRINTABLE);
 
   // TODO: This should be inside add_callback
-  Poco::Net::FilePartSource *image = new Poco::Net::FilePartSource(
+  FilePartSource *image = new FilePartSource(
     "views/images/home.jpg", "image/jpeg");
   image->headers().add("Content-ID", "<5e3424ee3db63_3c12aad4eea05bc88574@hostname.mail>");
-  message.addPart("home.jpg", image, Poco::Net::MailMessage::CONTENT_ATTACHMENT, 
-    Poco::Net::MailMessage::ENCODING_BASE64);
+  message.addPart("home.jpg", image, MailMessage::CONTENT_ATTACHMENT, 
+    MailMessage::ENCODING_BASE64);
 
   return DeliverMessage(&message);
 }

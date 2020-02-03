@@ -126,6 +126,7 @@ class NotifierSmtp {
     bool DeliverMessage(Poco::Net::MailMessage *message);
   private:
     bool PathIsReadable(std::string);
+    std::unique_ptr<inja::Environment> GetInjaEnv();
 };
 
 #endif

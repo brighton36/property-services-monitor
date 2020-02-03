@@ -10,7 +10,7 @@
         {% else %}
         <h2 class="color-passed">Network Status: Online/Functional.</h2>
         {% endif %}
-      <p>Generated: 01/29/2020 13:00 UTC (TODO)</p>
+      <p>Generated: {{f("%02d",now.mon)}}/{{f("%02d",now.mday)}}/{{f("%04d",now.year)}} {{f("%02d",now.hour)}}:{{f("%02d",now.min)}} {{now.zone}}</p>
     </td>
   </tr>
 </table>
