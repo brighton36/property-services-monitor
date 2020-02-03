@@ -7,31 +7,31 @@
       font-family:'Google Sans',Roboto,RobotoDraft,Helvetica; 
       font-size:14px; 
       line-height:18px; 
-      font-color:{{text_color}};
+      font-color:{{default(text_color, "#0D1B1E")}};
     }
 
     h1 { 
       display: block;
       margin: 0 0 0 0;
-      font-color:{{text_color}};
+      font-color:{{default(text_color, "#0D1B1E")}};
     }
 
     h2 { 
       display: block;
       margin: 0 0 0 0;
-      font-color:{{text_color}};
+      font-color:{{default(text_color, "#0D1B1E")}};
     }
 
     h3 { 
       display: block;
       margin: 0.8em 0 0 0;
-      font-color:{{text_color}};
+      font-color:{{default(text_color, "#0D1B1E")}};
     }
 
     h4 { 
       font-size:16px; 
       line-height:28px; 
-      font-color:{{text_color}};
+      font-color:{{default(text_color, "#0D1B1E")}};
       display: block;
       margin: 0.8em 0 0 0;
       padding: 0;
@@ -49,31 +49,8 @@
       padding: 0;
     }
 
-    .results-table td, .results-table th {
-      padding: 3px 6px 3px 6px; 
-      color: {{text_color}};
-    }
-    .results-table tr.header-row th {
-      background-color: #897961;
-      color: #fef6eb;
-      font-weight: normal;
-    }
-    .results-table tr {
-      background-color: #FEF6EB
-    }
-    .results-table tr.alt {
-      background-color: #D0C4B2;
-    }
-
-    .color-passed {
-      color: #3F5C53;
-    }
-    .color-failed {
-      color: #802829;
-    }
-    .color-notice {
-      color:#494661;
-    }
+    .color-passed { color: {{default(pass_color, "#3F5C53")}}; }
+    .color-failed { color: {{default(fail_color, "#802829")}}; }
 
     .strong{
       font-weight: bold;
@@ -84,7 +61,7 @@
 
     /* This fixes the gmail blue-color auto-linking ... feature. */
     .nolink { 
-      color:{{text_color}}!important; 
+      color:{{default(text_color, "#0D1B1E")}}!important; 
       text-decoration:none!important;
     }
     
@@ -94,13 +71,13 @@
     <table width="100%" border="0" cellspacing="0" cellpadding="0">
       <tr>
         <td>
-          <table bgcolor="{{margin_color}}" width="100%" border="0" cellspacing="10" cellpadding="0">
+          <table bgcolor="{{default(margin_color, "#C3DBC5")}}" width="100%" border="0" cellspacing="10" cellpadding="0">
             <tr>
               <td>
-                <table bgcolor="{{border_color}}" width="100%" border="0" cellspacing="3" cellpadding="0">
+                <table bgcolor="{{default(border_color, "#7798AB")}}" width="100%" border="0" cellspacing="3" cellpadding="0">
                   <tr>
                     <td>
-                      <table bgcolor="{{body_color}}" width="100%" border="0" cellspacing="0" cellpadding="20">
+                      <table bgcolor="{{default(body_color, "#E8DCB9")}}" width="100%" border="0" cellspacing="0" cellpadding="20">
                         <tr>
                           <td>{% include "notify_body.html.inja" %}</td>
                         </tr>

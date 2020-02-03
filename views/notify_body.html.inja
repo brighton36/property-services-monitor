@@ -10,7 +10,7 @@
         {% else %}
         <h2 class="color-passed">Network Status: Online/Functional.</h2>
         {% endif %}
-      <p style="font-color:#262626">Generated: 01/29/2020 13:00 UTC (TODO)</p>
+      <p>Generated: 01/29/2020 13:00 UTC (TODO)</p>
     </td>
   </tr>
 </table>

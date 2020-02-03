@@ -14,7 +14,7 @@ int main(int argc, char* argv[]) {
   }
 
   MonitorJob job;
-  SmtpNotifier notifier;
+  NotifierSmtp notifier;
   string base_path;
 
   // Load and Verify the config :
@@ -32,7 +32,7 @@ int main(int argc, char* argv[]) {
       throw invalid_argument(fmt::format(MISSING_FIELD, "notification"));
 
     job = MonitorJob(config["hosts"]);
-    notifier = SmtpNotifier(base_path, config["notification"]);
+    notifier = NotifierSmtp(base_path, config["notification"]);
   } catch(const YAML::Exception& e) {
     fmt::print(cerr, "YAML Exception: {}\n", e.what());
     return 1;

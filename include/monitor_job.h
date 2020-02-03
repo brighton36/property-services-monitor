@@ -112,15 +112,16 @@ class MonitorJob {
     nlohmann::json ToJson();  
 }; 
 
-class SmtpNotifier { 
+class NotifierSmtp { 
   public:
     std::string to, from, subject, host, username, password;
     std::string base_path, template_html_path, template_plain_path;
     unsigned int port;
     bool isSSL;
+    PTR_UMAP_STR parameters;
 
-    SmtpNotifier(std::string, const YAML::Node);
-    SmtpNotifier() {};
+    NotifierSmtp(std::string, const YAML::Node);
+    NotifierSmtp() {};
     bool SendResults(nlohmann::json*);
     bool DeliverMessage(Poco::Net::MailMessage *message);
   private:

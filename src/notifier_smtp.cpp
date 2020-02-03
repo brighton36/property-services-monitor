@@ -18,7 +18,7 @@
 using namespace std;
 using namespace Poco::Net;
 
-SmtpNotifier::SmtpNotifier(string tpath, const YAML::Node config) {
+NotifierSmtp::NotifierSmtp(string tpath, const YAML::Node config) {
 
   if (!config["to"]) 
     throw invalid_argument(fmt::format(MISSING_FIELD, "to"));
@@ -70,22 +70,18 @@ SmtpNotifier::SmtpNotifier(string tpath, const YAML::Node config) {
   
   if (port == 0) port = (isSSL) ? 465 : 25;
 
-  // TODO: Do a template section like this:
-	/*
-	this->smtp_params = make_shared<unordered_map<string, string>>();
+	this->parameters = make_shared<unordered_map<string, string>>();
   
-  if ( (!config["smtp"]) || (!config["smtp"].IsMap()))
-    throw invalid_argument(fmt::format("Smtp settings missing", "smtp"));
-
-  for(auto it=config["smtp"].begin();it!=config["smtp"].end();++it) {
-    const auto param = it->first.as<std::string>();
-    const auto value = it->second.as<std::string>();
-    
-    this->smtp_params->insert(make_pair(param, value));
-  }*/
+  if (config["parameters"])
+    for(auto it=config["parameters"].begin();it!=config["parameters"].end();++it) {
+      const auto param = it->first.as<std::string>();
+      const auto value = it->second.as<std::string>();
+      
+      this->parameters->insert(make_pair(param, value));
+    }
 }
 
-bool SmtpNotifier::DeliverMessage(MailMessage *message) {
+bool NotifierSmtp::DeliverMessage(MailMessage *message) {
   if (isSSL) {
     Poco::SharedPtr<InvalidCertificateHandler> pCert = new AcceptCertificateHandler(false);
     Context::Ptr pContext = new Context(Context::CLIENT_USE, "", "", "", 
@@ -122,22 +118,15 @@ bool SmtpNotifier::DeliverMessage(MailMessage *message) {
   return true;
 }
 
-bool SmtpNotifier::SendResults(nlohmann::json *results) {
+bool NotifierSmtp::SendResults(nlohmann::json *results) {
   auto tmpl = *results;
 
-  // TODO: These should go in the yaml under a template: section...
-  // TODO: Add a thumbnail here. And if these aren't specified, they should default
-  // to something in the template...
-  tmpl["text_color"] = "#0D1B1E";
-  tmpl["margin_color"] = "#C3DBC5";
-  tmpl["border_color"] = "#7798AB";
-  tmpl["body_color"] = "#E8DCB9";
-  tmpl["alert_color"] = "#F2CEE6";
+  for (auto param : *parameters) 
+    tmpl[param.first] = param.second;
 
   tmpl["to"] = to;
   tmpl["from"] = from;
   tmpl["subject"] = subject;
-  tmpl["template_html"] = template_html_path;
 
   // Compile the email :
 	Poco::Net::MailMessage message;
@@ -194,7 +183,7 @@ bool SmtpNotifier::SendResults(nlohmann::json *results) {
 }
 
 
-bool SmtpNotifier::PathIsReadable(string path) {
+bool NotifierSmtp::PathIsReadable(string path) {
 	filesystem::path p(path);
 
 	error_code ec;
