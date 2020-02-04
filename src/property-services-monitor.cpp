@@ -7,6 +7,18 @@ using namespace std;
 
 MonitorServiceFactory::map_type * MonitorServiceFactory::map = nullptr;
 
+bool PathIsReadable(string path) {
+	filesystem::path p(path);
+
+	error_code ec;
+	auto perms = filesystem::status(p, ec).permissions();
+
+	return ( (ec.value() == 0) && (
+    (perms & filesystem::perms::owner_read) != filesystem::perms::none &&
+    (perms & filesystem::perms::group_read) != filesystem::perms::none &&
+    (perms & filesystem::perms::others_read) != filesystem::perms::none ) );
+}
+
 int main(int argc, char* argv[]) {
   if (argc < 2) {
     fmt::print(cerr, "Usage: {} config.yml\n", argv[0]);

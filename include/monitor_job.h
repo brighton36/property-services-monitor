@@ -11,6 +11,7 @@
 
 #include "Poco/Net/HTTPResponse.h"
 #include "Poco/Net/MailMessage.h"
+#include <Poco/Net/FilePartSource.h>
 
 #include "inja.hpp"
 
@@ -25,6 +26,8 @@
 
 #define PTR_UMAP_STR std::shared_ptr<std::unordered_map<std::string, std::string>>
 #define MISSING_FIELD "Missing \"{}\" field."
+
+bool PathIsReadable(std::string);
 
 class MonitorServiceBase { 
   public:
@@ -112,6 +115,16 @@ class MonitorJob {
     nlohmann::json ToJson();  
 }; 
 
+class SmtpAttachment {
+  std::string full_path;
+	std::string contents_hash;
+  std::unique_ptr<Poco::Net::FilePartSource> file_part_source;
+
+  public:
+    SmtpAttachment(std::string, std::string);
+    std::string GetCiD();
+};
+
 class NotifierSmtp { 
   public:
     std::string to, from, subject, host, username, password;
@@ -119,13 +132,13 @@ class NotifierSmtp {
     unsigned int port;
     bool isSSL;
     PTR_UMAP_STR parameters;
+    std::vector<std::unique_ptr<SmtpAttachment>> attachments;
 
     NotifierSmtp(std::string, const YAML::Node);
     NotifierSmtp() {};
     bool SendResults(nlohmann::json*);
     bool DeliverMessage(Poco::Net::MailMessage *message);
   private:
-    bool PathIsReadable(std::string);
     std::unique_ptr<inja::Environment> GetInjaEnv();
 };
 

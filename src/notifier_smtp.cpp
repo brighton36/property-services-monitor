@@ -2,6 +2,10 @@
 
 #include "fmt/printf.h"
 
+#include "Poco/SHA1Engine.h"
+#include "Poco/Crypto/RSAKey.h"
+#include "Poco/Crypto/RSADigestEngine.h"
+
 #include "Poco/Net/MailRecipient.h"
 #include "Poco/Net/SMTPClientSession.h"
 #include "Poco/Net/SecureSMTPClientSession.h"
@@ -11,7 +15,6 @@
 #include "Poco/Net/SecureStreamSocket.h"
 
 #include <Poco/Net/StringPartSource.h>
-#include <Poco/Net/FilePartSource.h>
 #include <Poco/Net/MailMessage.h>
 #include <Poco/Net/MediaType.h>
 
@@ -19,6 +22,61 @@
 
 using namespace std;
 using namespace Poco::Net;
+using namespace Poco::Crypto;
+
+SmtpAttachment::SmtpAttachment(string base_path, string file_path) {
+  full_path = (filesystem::path(file_path).is_relative()) ? 
+    fmt::format("{}/{}", base_path, file_path) : file_path;
+
+  if (!PathIsReadable(full_path)) 
+    throw invalid_argument(fmt::format(CANT_READ, full_path));
+
+	// Let's figure out what kind of file it is based off the extension:
+  std::smatch matches;
+
+  if (!regex_search(full_path, matches, regex("([^\\.]+)$")) || (matches.size() != 2))
+    throw invalid_argument(fmt::format("Unable to find file extension for {}", file_path));
+
+  string file_ext = matches[1].str();
+  string file_mime_type;
+  
+  if (("jpg" == file_ext) || ("jpeg" == file_ext)) file_mime_type = "image/jpeg";
+  else if ("png" == file_ext) file_mime_type = "image/png";
+  else if ("gif" == file_ext) file_mime_type = "image/gif";
+  else if ("webp" == file_ext) file_mime_type = "image/webp";
+  else if ("webm" == file_ext) file_mime_type = "image/webm";
+  else
+    throw invalid_argument(fmt::format("Unable to find mime type for {}", file_path));
+
+  // Create the FilePartSource:
+  file_part_source = make_unique<FilePartSource>(full_path, file_mime_type);
+
+	// Read the file into a buffer:
+  auto &is = file_part_source->stream();
+	is.seekg(0, is.end);
+	int length = is.tellg();
+  if (length <= 0) throw invalid_argument(fmt::format(CANT_READ, full_path));
+	is.seekg(0, is.beg);
+	auto buffer = new char [length];
+	is.read(buffer,length);
+
+	//is.close(); TODO?
+
+	// Now let's get the hash of this file's contents:
+	RSADigestEngine eng(RSAKey(RSAKey::KL_2048, RSAKey::EXP_LARGE), "SHA256");
+
+	eng.update(buffer,length);
+	contents_hash = Poco::DigestEngine::digestToHex(eng.digest());
+
+	delete buffer;
+
+  cout << "Image:" << full_path << endl;
+	cout << "Digest:" << contents_hash << endl;;
+}
+
+string SmtpAttachment::GetCiD() { 
+  return fmt::format("cid:{}@hostname.mail", contents_hash);
+}
 
 NotifierSmtp::NotifierSmtp(string tpath, const YAML::Node config) {
 
@@ -121,6 +179,9 @@ bool NotifierSmtp::DeliverMessage(MailMessage *message) {
 }
 
 unique_ptr<inja::Environment> NotifierSmtp::GetInjaEnv() {
+
+  attachments.clear();
+
   unique_ptr<inja::Environment> env(new inja::Environment);
 
 	env->add_callback("h", 1, [](inja::Arguments& args) {
@@ -145,30 +206,41 @@ unique_ptr<inja::Environment> NotifierSmtp::GetInjaEnv() {
 	env->add_callback("f", 2, [](inja::Arguments& args) {
 		string formatter = args.at(0)->get<string>();
     auto p = args.at(1);
-    
-    string ret;
 
     switch ( p->type() ) {
       case nlohmann::json::value_t::string : 
-        ret = fmt::sprintf(formatter, p->get<string>());
+        return fmt::sprintf(formatter, p->get<string>());
         break;
       case nlohmann::json::value_t::number_unsigned : 
-        ret = fmt::sprintf(formatter, p->get<unsigned int>());
+        return fmt::sprintf(formatter, p->get<unsigned int>());
         break;
       case nlohmann::json::value_t::number_integer : 
-        ret = fmt::sprintf(formatter, p->get<int>());
+        return fmt::sprintf(formatter, p->get<int>());
         break;
       case nlohmann::json::value_t::number_float : 
-        ret = fmt::sprintf(formatter, p->get<float>());
+        return fmt::sprintf(formatter, p->get<float>());
         break;
       case nlohmann::json::value_t::boolean : 
-        ret = fmt::sprintf(formatter, p->get<bool>());
+        return fmt::sprintf(formatter, p->get<bool>());
         break;
       default: 
-        inja::inja_throw("render_error", "Unrecognized value type passed to f()");
+        break;
     }
 
-    return ret; 
+    inja::inja_throw("render_error", "Unrecognized value type passed to f()");
+
+    return string();
+  });
+
+	env->add_callback("image_src", 1, [&](inja::Arguments& args) {
+		string src = args.at(0)->get<string>();
+
+    auto attachment = make_unique<SmtpAttachment>(base_path, src);
+    
+    // TODO: check for dupes before adding
+    //this->attachments.push_back(move(attachment));
+
+    return attachment->GetCiD();
   });
   
   return env;
@@ -206,8 +278,6 @@ bool NotifierSmtp::SendResults(nlohmann::json *results) {
 
   auto inja = GetInjaEnv();
 
-  cout << "Sizeof env:" << sizeof(inja) << endl;
-
 	message.setSubject(subject); // TODO: run the tmpl lib here
 
   auto notification_in_html = inja->render_file(template_html_path, tmpl);
@@ -224,8 +294,7 @@ bool NotifierSmtp::SendResults(nlohmann::json *results) {
     MailMessage::CONTENT_INLINE, MailMessage::ENCODING_QUOTED_PRINTABLE);
 
   // TODO: This should be inside add_callback
-  FilePartSource *image = new FilePartSource(
-    "views/images/home.jpg", "image/jpeg");
+  FilePartSource *image = new FilePartSource("views/images/home.jpg", "image/jpeg");
   image->headers().add("Content-ID", "<5e3424ee3db63_3c12aad4eea05bc88574@hostname.mail>");
   message.addPart("home.jpg", image, MailMessage::CONTENT_ATTACHMENT, 
     MailMessage::ENCODING_BASE64);
@@ -234,14 +303,3 @@ bool NotifierSmtp::SendResults(nlohmann::json *results) {
 }
 
 
-bool NotifierSmtp::PathIsReadable(string path) {
-	filesystem::path p(path);
-
-	error_code ec;
-	auto perms = filesystem::status(p, ec).permissions();
-
-	return ( (ec.value() == 0) && (
-    (perms & filesystem::perms::owner_read) != filesystem::perms::none &&
-    (perms & filesystem::perms::group_read) != filesystem::perms::none &&
-    (perms & filesystem::perms::others_read) != filesystem::perms::none ) );
-}

@@ -13,7 +13,7 @@ DEPS = $(OBJECTS:.o=.d)
 # flags #
 COMPILE_FLAGS = -std=c++17 -Wall -Wextra # -g
 INCLUDES = -I./include/ 
-LIBS = -lfmt -lyaml-cpp -lPocoNet -lPocoNetSSL -lPocoFoundation
+LIBS = -lfmt -lyaml-cpp -lPocoNet -lPocoNetSSL -lPocoFoundation -lPocoCrypto
 
 .PHONY: default_target
 default_target: release
