@@ -10,7 +10,7 @@
 #include "yaml-cpp/yaml.h"
 
 #include "Poco/Net/HTTPResponse.h"
-#include "Poco/Net/MailMessage.h"
+#include <Poco/Net/MailMessage.h>
 #include <Poco/Net/FilePartSource.h>
 
 #include "inja.hpp"
@@ -116,29 +116,34 @@ class MonitorJob {
 }; 
 
 class SmtpAttachment {
-  std::string full_path;
-	std::string contents_hash;
-  std::unique_ptr<Poco::Net::FilePartSource> file_part_source;
-
   public:
+    std::string full_path, contents_hash, file_mime_type;
+    std::unique_ptr<Poco::Net::FilePartSource> file_part_source;
     SmtpAttachment(std::string, std::string);
-    std::string GetCiD();
+    SmtpAttachment(const SmtpAttachment &s2);
+    bool operator==(const SmtpAttachment &s2);
+    std::string GetFilename();
+    std::string GetContentID();
+    void AttachToMessage(Poco::Net::MailMessage *m);
+  private:
+    void SetFilepath(std::string);
 };
 
 class NotifierSmtp { 
   public:
-    std::string to, from, subject, host, username, password;
-    std::string base_path, template_html_path, template_plain_path;
+    std::string to, from, subject, host, username, password, base_path;
+    std::string template_subject, template_html_path, template_plain_path;
     unsigned int port;
     bool isSSL;
     PTR_UMAP_STR parameters;
-    std::vector<std::unique_ptr<SmtpAttachment>> attachments;
+    std::vector<SmtpAttachment> attachments;
 
     NotifierSmtp(std::string, const YAML::Node);
     NotifierSmtp() {};
     bool SendResults(nlohmann::json*);
     bool DeliverMessage(Poco::Net::MailMessage *message);
   private:
+    nlohmann::json GetNow();
     std::unique_ptr<inja::Environment> GetInjaEnv();
 };
 

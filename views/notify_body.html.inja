@@ -1,7 +1,7 @@
 <table width="100%" border="0" cellspacing="0" cellpadding="0">
   <tr>
-    <td width="140" align="center" valign="top">
-			<img height="132" width="108" src="{{ image_src("views/images/home.jpg") }}" />
+    <td width="260" align="center" valign="top" cellspacing="2">
+			<img width="228" height="152" src="{{ image_src(default(thumbnail, "views/images/home.jpg")) }}" />
 		</td>
     <td valign="top">
       <h1>{{ h(subject) }}</h1>

@@ -15,41 +15,21 @@
 #include "Poco/Net/SecureStreamSocket.h"
 
 #include <Poco/Net/StringPartSource.h>
-#include <Poco/Net/MailMessage.h>
 #include <Poco/Net/MediaType.h>
 
 #define CANT_READ "Unable to open file {}."
+#define DEFAULT_TEMPLATE_SUBJECT "{{subject}}{% if has_failures %}: ATTENTION REQUIRED{% endif %}"
 
 using namespace std;
 using namespace Poco::Net;
 using namespace Poco::Crypto;
 
 SmtpAttachment::SmtpAttachment(string base_path, string file_path) {
-  full_path = (filesystem::path(file_path).is_relative()) ? 
-    fmt::format("{}/{}", base_path, file_path) : file_path;
+	SetFilepath( (filesystem::path(file_path).is_relative()) ? 
+    fmt::format("{}/{}", base_path, file_path) : file_path );
 
   if (!PathIsReadable(full_path)) 
     throw invalid_argument(fmt::format(CANT_READ, full_path));
-
-	// Let's figure out what kind of file it is based off the extension:
-  std::smatch matches;
-
-  if (!regex_search(full_path, matches, regex("([^\\.]+)$")) || (matches.size() != 2))
-    throw invalid_argument(fmt::format("Unable to find file extension for {}", file_path));
-
-  string file_ext = matches[1].str();
-  string file_mime_type;
-  
-  if (("jpg" == file_ext) || ("jpeg" == file_ext)) file_mime_type = "image/jpeg";
-  else if ("png" == file_ext) file_mime_type = "image/png";
-  else if ("gif" == file_ext) file_mime_type = "image/gif";
-  else if ("webp" == file_ext) file_mime_type = "image/webp";
-  else if ("webm" == file_ext) file_mime_type = "image/webm";
-  else
-    throw invalid_argument(fmt::format("Unable to find mime type for {}", file_path));
-
-  // Create the FilePartSource:
-  file_part_source = make_unique<FilePartSource>(full_path, file_mime_type);
 
 	// Read the file into a buffer:
   auto &is = file_part_source->stream();
@@ -60,8 +40,6 @@ SmtpAttachment::SmtpAttachment(string base_path, string file_path) {
 	auto buffer = new char [length];
 	is.read(buffer,length);
 
-	//is.close(); TODO?
-
 	// Now let's get the hash of this file's contents:
 	RSADigestEngine eng(RSAKey(RSAKey::KL_2048, RSAKey::EXP_LARGE), "SHA256");
 
@@ -69,14 +47,57 @@ SmtpAttachment::SmtpAttachment(string base_path, string file_path) {
 	contents_hash = Poco::DigestEngine::digestToHex(eng.digest());
 
 	delete buffer;
-
-  cout << "Image:" << full_path << endl;
-	cout << "Digest:" << contents_hash << endl;;
 }
 
-string SmtpAttachment::GetCiD() { 
-  return fmt::format("cid:{}@hostname.mail", contents_hash);
+SmtpAttachment::SmtpAttachment(const SmtpAttachment &s2) {
+  SetFilepath(s2.full_path);
+	contents_hash = s2.contents_hash;
 }
+
+bool SmtpAttachment::operator==(const SmtpAttachment &s2) {
+  return (contents_hash == s2.contents_hash);
+}
+
+void SmtpAttachment::SetFilepath(std::string f) {
+	full_path = f;
+
+	// Let's figure out what kind of file it is based off the extension:
+  std::smatch matches;
+
+  if (!regex_search(full_path, matches, regex("([^\\.]+)$")) || (matches.size() != 2))
+    throw invalid_argument(fmt::format("Unable to find file extension for {}", GetFilename()));
+
+  string file_ext = matches[1].str();
+  
+  if (("jpg" == file_ext) || ("jpeg" == file_ext)) file_mime_type = "image/jpeg";
+  else if ("png" == file_ext) file_mime_type = "image/png";
+  else if ("gif" == file_ext) file_mime_type = "image/gif";
+  else if ("webp" == file_ext) file_mime_type = "image/webp";
+  else if ("webm" == file_ext) file_mime_type = "image/webm";
+  else
+    throw invalid_argument(fmt::format("Unable to find mime type for {}", GetFilename()));
+
+  // Create the FilePartSource:
+  file_part_source = make_unique<FilePartSource>(full_path, file_mime_type);
+}
+
+string SmtpAttachment::GetContentID() { 
+  return fmt::format("{}@hostname.mail", contents_hash);
+}
+
+string SmtpAttachment::GetFilename() { 
+  return filesystem::path(full_path).filename();
+}
+
+void SmtpAttachment::AttachToMessage(MailMessage *m) { 
+  // This needs to go roughly here, as the hash may not be generated until 
+  // construction ends. Note that GetContentID is largely the contents_hash:
+  file_part_source->headers().add("Content-ID", fmt::format("<{}>", GetContentID()));
+
+  m->addPart(GetFilename(), file_part_source.release(),
+    MailMessage::CONTENT_ATTACHMENT, MailMessage::ENCODING_BASE64);
+}
+
 
 NotifierSmtp::NotifierSmtp(string tpath, const YAML::Node config) {
 
@@ -99,6 +120,9 @@ NotifierSmtp::NotifierSmtp(string tpath, const YAML::Node config) {
   subject = config["subject"].as<string>();
   template_html_path = config["template_html"].as<string>();
   template_plain_path = config["template_plain"].as<string>();
+
+  template_subject = (config["template_subject"]) ? 
+    config["template_subject"].as<string>() : DEFAULT_TEMPLATE_SUBJECT;
 
   if (filesystem::path(template_html_path).is_relative())
     template_html_path = fmt::format("{}/{}", base_path, template_html_path);
@@ -233,17 +257,35 @@ unique_ptr<inja::Environment> NotifierSmtp::GetInjaEnv() {
   });
 
 	env->add_callback("image_src", 1, [&](inja::Arguments& args) {
-		string src = args.at(0)->get<string>();
-
-    auto attachment = make_unique<SmtpAttachment>(base_path, src);
+    auto attachment = SmtpAttachment(base_path, args.at(0)->get<string>());
     
-    // TODO: check for dupes before adding
-    //this->attachments.push_back(move(attachment));
+    // If it's not already in the attachments vector, add it:
+    if(find(attachments.begin(), attachments.end(), attachment) == attachments.end())
+      attachments.push_back(attachment);
 
-    return attachment->GetCiD();
+    return fmt::format("cid:{}", attachment.GetContentID());
   });
   
   return env;
+}
+
+nlohmann::json NotifierSmtp::GetNow() {
+  auto ret = nlohmann::json::object();
+  auto unix_now = time(nullptr);
+  auto local_now = localtime( &unix_now );
+
+  ret["sec"]   = local_now->tm_sec;
+  ret["min"]   = local_now->tm_min;
+  ret["hour"]  = local_now->tm_hour;
+  ret["mday"]  = local_now->tm_mday;
+  ret["mon"]   = (1+local_now->tm_mon);
+  ret["year"]  = (1900+local_now->tm_year);
+  ret["wday"]  = local_now->tm_wday;
+  ret["yday"]  = local_now->tm_yday;
+  ret["isdst"] = local_now->tm_isdst;
+  ret["zone"]  = local_now->tm_zone;
+
+  return ret;
 }
 
 bool NotifierSmtp::SendResults(nlohmann::json *results) {
@@ -255,30 +297,16 @@ bool NotifierSmtp::SendResults(nlohmann::json *results) {
   tmpl["from"] = from;
   tmpl["subject"] = subject;
 
-  auto unix_now = time(nullptr);
-  auto local_now = localtime( &unix_now );
-
-  tmpl["now"] = nlohmann::json::object();
-  tmpl["now"]["sec"]   = local_now->tm_sec;
-  tmpl["now"]["min"]   = local_now->tm_min;
-  tmpl["now"]["hour"]  = local_now->tm_hour;
-  tmpl["now"]["mday"]  = local_now->tm_mday;
-  tmpl["now"]["mon"]   = (1+local_now->tm_mon);
-  tmpl["now"]["year"]  = (1900+local_now->tm_year);
-  tmpl["now"]["wday"]  = local_now->tm_wday;
-  tmpl["now"]["yday"]  = local_now->tm_yday;
-  tmpl["now"]["isdst"] = local_now->tm_isdst;
-  tmpl["now"]["zone"]  = local_now->tm_zone;
+  tmpl["now"] = GetNow();
 
   // Compile the email :
 	MailMessage message;
 	message.setSender(from);
-	message.addRecipient(
-		MailRecipient(MailRecipient::PRIMARY_RECIPIENT, to));
+	message.addRecipient(MailRecipient(MailRecipient::PRIMARY_RECIPIENT, to));
 
   auto inja = GetInjaEnv();
 
-	message.setSubject(subject); // TODO: run the tmpl lib here
+	message.setSubject(inja->render(template_subject, tmpl));
 
   auto notification_in_html = inja->render_file(template_html_path, tmpl);
   auto notification_in_plain = inja->render_file(template_plain_path, tmpl);
@@ -293,11 +321,8 @@ bool NotifierSmtp::SendResults(nlohmann::json *results) {
 	message.addPart("", new StringPartSource(notification_in_html, "text/html"), 
     MailMessage::CONTENT_INLINE, MailMessage::ENCODING_QUOTED_PRINTABLE);
 
-  // TODO: This should be inside add_callback
-  FilePartSource *image = new FilePartSource("views/images/home.jpg", "image/jpeg");
-  image->headers().add("Content-ID", "<5e3424ee3db63_3c12aad4eea05bc88574@hostname.mail>");
-  message.addPart("home.jpg", image, MailMessage::CONTENT_ATTACHMENT, 
-    MailMessage::ENCODING_BASE64);
+  for (auto& attachment : attachments) 
+    attachment.AttachToMessage(&message);
 
   return DeliverMessage(&message);
 }
