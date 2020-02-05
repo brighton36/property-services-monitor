@@ -37,6 +37,11 @@ class MonitorServiceBase {
 
     MonitorServiceBase(std::string type, std::string, PTR_UMAP_STR);
 
+    template<typename... Args> bool AvailabilityFail(std::string reason, Args... args) {
+      this->results->emplace("failure_reason", fmt::format(reason, args...));
+      return false;
+    }
+
     virtual bool IsAvailable();
 };
 

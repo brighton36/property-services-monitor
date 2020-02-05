@@ -92,24 +92,17 @@ bool MonitorServiceWeb::IsAvailable() {
 
         this->results->emplace("response_match_count", to_string(match_count));
 
-        if ( match_count == 0 ) {
-          this->results->emplace("failure_reason", 
-            fmt::format("Unable to find {} in content response", this->ensure_match));
-          return  false;
-        }
+        if ( match_count == 0 )
+          return AvailabilityFail("Unable to find {} in content response", this->ensure_match);
       }
 
       return true;
     }
-    else {
-      this->results->emplace("failure_reason", 
-        fmt::format("Server status code {} did not match the expected {} status code.", 
-          status_code, this->status_equals));
-      return false;
-    }
+    else
+      return AvailabilityFail("Server status code {} did not match the expected {} status code.", 
+          status_code, this->status_equals);
 	}
 	catch (const exception& e) { 
-    this->results->emplace("failure_reason", e.what());
-    return false; 
+    return AvailabilityFail(e.what());
   }
 }

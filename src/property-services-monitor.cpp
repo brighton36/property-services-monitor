@@ -59,7 +59,7 @@ int main(int argc, char* argv[]) {
   // Build Output:
   auto tmpl_data = job.ToJson();
 
-  // TODO: We may want to just dump the text template from the job()
+  // TODO: We should just dump the text template from the job(). Or, maybe have a text output option
   fmt::print("To  : {} \nFrom: {}\n", notifier.to, notifier.from);
 
   for (auto& host : tmpl_data["hosts"].items()) {
