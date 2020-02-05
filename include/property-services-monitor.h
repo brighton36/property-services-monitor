@@ -27,7 +27,7 @@
 #define PTR_UMAP_STR std::shared_ptr<std::unordered_map<std::string, std::string>>
 #define MISSING_FIELD "Missing \"{}\" field."
 
-bool PathIsReadable(std::string);
+bool pathIsReadable(std::string);
 
 class MonitorServiceBase { 
   public:
@@ -35,14 +35,16 @@ class MonitorServiceBase {
     PTR_UMAP_STR params;
     PTR_UMAP_STR results;
 
-    MonitorServiceBase(std::string type, std::string, PTR_UMAP_STR);
+    MonitorServiceBase(std::string, std::string, PTR_UMAP_STR);
 
-    template<typename... Args> bool AvailabilityFail(std::string reason, Args... args) {
-      this->results->emplace("failure_reason", fmt::format(reason, args...));
+    virtual bool isAvailable();
+
+  protected:
+    bool resultAdd(std::string, std::string);
+    template<typename... Args> bool resultFail(std::string reason, Args... args) {
+      resultAdd("failure_reason", fmt::format(reason, args...));
       return false;
     }
-
-    virtual bool IsAvailable();
 };
 
 template<typename T> std::shared_ptr<MonitorServiceBase> \
@@ -85,7 +87,7 @@ class MonitorServicePing : public MonitorServiceBase {
   public:
     unsigned int tries, success_over;
     MonitorServicePing(std::string, PTR_UMAP_STR);
-    bool IsAvailable();
+    bool isAvailable();
   private:
     static ServiceRegister<MonitorServicePing> reg;
 }; 
@@ -98,8 +100,8 @@ class MonitorServiceWeb : public MonitorServiceBase {
 		bool isHttps;
 
     MonitorServiceWeb(std::string, PTR_UMAP_STR);
-    bool IsAvailable();
-    std::string HttXRequest(std::string path, Poco::Net::HTTPResponse &response);
+    bool isAvailable();
+    std::string httxRequest(std::string path, Poco::Net::HTTPResponse &response);
   private:
     static ServiceRegister<MonitorServiceWeb> reg;
 }; 
@@ -117,7 +119,7 @@ class MonitorJob {
     std::vector<std::shared_ptr<MonitorHost>> hosts;
     MonitorJob(const YAML::Node);  
     MonitorJob(){};  
-    nlohmann::json ToJson();  
+    nlohmann::json toJson();  
 }; 
 
 class SmtpAttachment {
@@ -127,11 +129,11 @@ class SmtpAttachment {
     SmtpAttachment(std::string, std::string);
     SmtpAttachment(const SmtpAttachment &s2);
     bool operator==(const SmtpAttachment &s2);
-    std::string GetFilename();
-    std::string GetContentID();
-    void AttachToMessage(Poco::Net::MailMessage *m);
+    std::string getFilename();
+    std::string getContentID();
+    void attachTo(Poco::Net::MailMessage *m);
   private:
-    void SetFilepath(std::string);
+    void setFilepath(std::string);
 };
 
 class NotifierSmtp { 
@@ -145,11 +147,11 @@ class NotifierSmtp {
 
     NotifierSmtp(std::string, const YAML::Node);
     NotifierSmtp() {};
-    bool SendResults(nlohmann::json*);
-    bool DeliverMessage(Poco::Net::MailMessage *message);
+    bool sendResults(nlohmann::json*);
+    bool deliverMessage(Poco::Net::MailMessage *message);
   private:
-    nlohmann::json GetNow();
-    std::unique_ptr<inja::Environment> GetInjaEnv();
+    nlohmann::json getNow();
+    std::unique_ptr<inja::Environment> getInjaEnv();
 };
 
 #endif

@@ -1,4 +1,4 @@
-#include "monitor_job.h"
+#include "property-services-monitor.h"
 
 #include "Poco/Net/HTTPRequest.h"
 #include "Poco/Net/HTTPClientSession.h"
@@ -14,53 +14,53 @@ MonitorServiceWeb::MonitorServiceWeb(string address, PTR_UMAP_STR params)
   : MonitorServiceBase("web", address, params) {
 
   // Default values:
-  this->isHttps = false;
-  this->port = 0;
-  this->path = "/";
-  this->status_equals = Poco::Net::HTTPResponse::HTTP_OK;
+  isHttps = false;
+  port = 0;
+  path = "/";
+  status_equals = Poco::Net::HTTPResponse::HTTP_OK;
 
   for( const auto& n : *params )
     if ("proto" == n.first) {
 			if (n.second == "http")
-				this->isHttps = false;
+				isHttps = false;
       else if (n.second == "https")
-				this->isHttps = true;
+				isHttps = true;
 			else
 				throw invalid_argument(fmt::format("Unrecognized web proto \"{}\".", 
 					n.second));
     }
     else if ("port" == n.first)
-      this->port = stoi(n.second);
+      port = stoi(n.second);
     else if ("path" == n.first)
-      this->path = n.second;
+      path = n.second;
     else if ("ensure_match" == n.first)
-      this->ensure_match = n.second;
+      ensure_match = n.second;
     else
       throw invalid_argument(fmt::format("Unrecognized ping parameter \"{}\".", 
         n.first));
 
-  if (!this->port) this->port = (this->isHttps) ? 443 : 80;
+  if (!port) port = (isHttps) ? 443 : 80;
 }
 
-string MonitorServiceWeb::HttXRequest(string path, Poco::Net::HTTPResponse &response) {
+string MonitorServiceWeb::httxRequest(string path, Poco::Net::HTTPResponse &response) {
 
   string content;
 
   Poco::Net::HTTPRequest request( Poco::Net::HTTPRequest::HTTP_GET, 
     path, Poco::Net::HTTPMessage::HTTP_1_1 );
 
-  if (this->isHttps) {
+  if (isHttps) {
     const Poco::Net::Context::Ptr context = new Poco::Net::Context(
       Poco::Net::Context::CLIENT_USE, "", "", "",
       Poco::Net::Context::VERIFY_NONE, 9, false,
       "ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
-    Poco::Net::HTTPSClientSession session(this->address, this->port, context);
+    Poco::Net::HTTPSClientSession session(address, port, context);
     session.sendRequest(request);
 
     Poco::StreamCopier::copyToString(session.receiveResponse(response), content);
     return content;
   } else {
-    Poco::Net::HTTPClientSession session(this->address, this->port);
+    Poco::Net::HTTPClientSession session(address, port);
     session.sendRequest(request);
 
     Poco::StreamCopier::copyToString(session.receiveResponse(response), content);
@@ -68,41 +68,41 @@ string MonitorServiceWeb::HttXRequest(string path, Poco::Net::HTTPResponse &resp
   }
 }
 
-bool MonitorServiceWeb::IsAvailable() {
-  MonitorServiceBase::IsAvailable();
+bool MonitorServiceWeb::isAvailable() {
+  MonitorServiceBase::isAvailable();
 
 	try {
 		Poco::Net::HTTPResponse response;
 
-    string response_content = this->HttXRequest(this->path, response);
+    string response_content = httxRequest(path, response);
 
-    this->results->emplace("response_status", to_string(response.getStatus()));
-    this->results->emplace("response_reason", response.getReason());
-    this->results->emplace("response_content", response_content);
+    resultAdd("response_status", to_string(response.getStatus()));
+    resultAdd("response_reason", response.getReason());
+    resultAdd("response_content", response_content);
 
     auto status_code = response.getStatus();
 
-    if (status_code == this->status_equals) {
-      if (!this->ensure_match.empty()) {
-        auto re = regex(this->ensure_match);
+    if (status_code == status_equals) {
+      if (!ensure_match.empty()) {
+        auto re = regex(ensure_match);
 
         auto match_count = distance(
           sregex_iterator( response_content.begin(), response_content.end(), re), 
           sregex_iterator());
 
-        this->results->emplace("response_match_count", to_string(match_count));
+        resultAdd("response_match_count", to_string(match_count));
 
         if ( match_count == 0 )
-          return AvailabilityFail("Unable to find {} in content response", this->ensure_match);
+          return resultFail("Unable to find {} in content response", ensure_match);
       }
 
       return true;
     }
     else
-      return AvailabilityFail("Server status code {} did not match the expected {} status code.", 
-          status_code, this->status_equals);
+      return resultFail("Server status code {} did not match the expected {} status code.", 
+          status_code, status_equals);
 	}
 	catch (const exception& e) { 
-    return AvailabilityFail(e.what());
+    return resultFail(e.what());
   }
 }

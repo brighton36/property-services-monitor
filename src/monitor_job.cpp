@@ -1,4 +1,4 @@
-#include "monitor_job.h"
+#include "property-services-monitor.h"
 #include "yaml-cpp/yaml.h"
 
 using namespace std;
@@ -66,13 +66,13 @@ MonitorJob::MonitorJob(const YAML::Node config) {
   }
 } 
 
-nlohmann::json MonitorJob::ToJson() {
+nlohmann::json MonitorJob::toJson() {
   nlohmann::json ret;
 
   ret["has_failures"] = false;
 	ret["hosts"] = nlohmann::json::array();
 
-  for (const auto host: this->hosts) {
+  for (const auto host: hosts) {
     auto json_host = nlohmann::json::object();
     json_host["label"] = host->label;
     json_host["description"] = host->description;
@@ -81,7 +81,7 @@ nlohmann::json MonitorJob::ToJson() {
 
     for(const auto service: host->services) {
       auto json_service = nlohmann::json::object();
-      bool is_up = service->IsAvailable();
+      bool is_up = service->isAvailable();
 
       if (!is_up) ret["has_failures"] = true;
 
@@ -101,11 +101,10 @@ nlohmann::json MonitorJob::ToJson() {
   return ret;
 }
 
-MonitorHost::MonitorHost(string label, string description, string address, 
-    vector<shared_ptr<MonitorServiceBase>> services) {
-  this->label = label;
-  this->description = description;
-  this->address = address;
-  this->services = services;
+MonitorHost::MonitorHost(string l, string d, string a, vector<shared_ptr<MonitorServiceBase>> s) {
+  label = l;
+  description = d;
+  address = a;
+  services = s;
 }
 

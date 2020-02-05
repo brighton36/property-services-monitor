@@ -1,4 +1,4 @@
-#include "monitor_job.h"
+#include "property-services-monitor.h"
 
 #include "Poco/Net/NetException.h"
 #include "Poco/Net/MailRecipient.h"
@@ -7,7 +7,7 @@ using namespace std;
 
 MonitorServiceFactory::map_type * MonitorServiceFactory::map = nullptr;
 
-bool PathIsReadable(string path) {
+bool pathIsReadable(string path) {
 	filesystem::path p(path);
 
 	error_code ec;
@@ -57,7 +57,7 @@ int main(int argc, char* argv[]) {
   }
 
   // Build Output:
-  auto tmpl_data = job.ToJson();
+  auto tmpl_data = job.toJson();
 
   // TODO: We should just dump the text template from the job(). Or, maybe have a text output option
   fmt::print("To  : {} \nFrom: {}\n", notifier.to, notifier.from);
@@ -74,7 +74,7 @@ int main(int argc, char* argv[]) {
 
   // Send the email:
   try {
-    notifier.SendResults(&tmpl_data);
+    notifier.sendResults(&tmpl_data);
   } catch (Poco::Net::SMTPException &e) {
     fmt::print(cerr, "SMTP Exception Encountered: {} {} {} {}\n", 
       e.code(), e.what(), e.message(), e.displayText().c_str() );

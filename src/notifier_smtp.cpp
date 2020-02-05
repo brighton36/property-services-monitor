@@ -1,4 +1,4 @@
-#include "monitor_job.h"
+#include "property-services-monitor.h"
 
 #include "fmt/printf.h"
 
@@ -25,10 +25,10 @@ using namespace Poco::Net;
 using namespace Poco::Crypto;
 
 SmtpAttachment::SmtpAttachment(string base_path, string file_path) {
-	SetFilepath( (filesystem::path(file_path).is_relative()) ? 
+	setFilepath( (filesystem::path(file_path).is_relative()) ? 
     fmt::format("{}/{}", base_path, file_path) : file_path );
 
-  if (!PathIsReadable(full_path)) 
+  if (!pathIsReadable(full_path)) 
     throw invalid_argument(fmt::format(CANT_READ, full_path));
 
 	// Read the file into a buffer:
@@ -50,7 +50,7 @@ SmtpAttachment::SmtpAttachment(string base_path, string file_path) {
 }
 
 SmtpAttachment::SmtpAttachment(const SmtpAttachment &s2) {
-  SetFilepath(s2.full_path);
+  setFilepath(s2.full_path);
 	contents_hash = s2.contents_hash;
 }
 
@@ -58,14 +58,14 @@ bool SmtpAttachment::operator==(const SmtpAttachment &s2) {
   return (contents_hash == s2.contents_hash);
 }
 
-void SmtpAttachment::SetFilepath(std::string f) {
+void SmtpAttachment::setFilepath(std::string f) {
 	full_path = f;
 
 	// Let's figure out what kind of file it is based off the extension:
   std::smatch matches;
 
   if (!regex_search(full_path, matches, regex("([^\\.]+)$")) || (matches.size() != 2))
-    throw invalid_argument(fmt::format("Unable to find file extension for {}", GetFilename()));
+    throw invalid_argument(fmt::format("Unable to find file extension for {}", getFilename()));
 
   string file_ext = matches[1].str();
   
@@ -75,26 +75,26 @@ void SmtpAttachment::SetFilepath(std::string f) {
   else if ("webp" == file_ext) file_mime_type = "image/webp";
   else if ("webm" == file_ext) file_mime_type = "image/webm";
   else
-    throw invalid_argument(fmt::format("Unable to find mime type for {}", GetFilename()));
+    throw invalid_argument(fmt::format("Unable to find mime type for {}", getFilename()));
 
   // Create the FilePartSource:
   file_part_source = make_unique<FilePartSource>(full_path, file_mime_type);
 }
 
-string SmtpAttachment::GetContentID() { 
+string SmtpAttachment::getContentID() { 
   return fmt::format("{}@hostname.mail", contents_hash);
 }
 
-string SmtpAttachment::GetFilename() { 
+string SmtpAttachment::getFilename() { 
   return filesystem::path(full_path).filename();
 }
 
-void SmtpAttachment::AttachToMessage(MailMessage *m) { 
+void SmtpAttachment::attachTo(MailMessage *m) { 
   // This needs to go roughly here, as the hash may not be generated until 
-  // construction ends. Note that GetContentID is largely the contents_hash:
-  file_part_source->headers().add("Content-ID", fmt::format("<{}>", GetContentID()));
+  // construction ends. Note that getContentID is largely the contents_hash:
+  file_part_source->headers().add("Content-ID", fmt::format("<{}>", getContentID()));
 
-  m->addPart(GetFilename(), file_part_source.release(),
+  m->addPart(getFilename(), file_part_source.release(),
     MailMessage::CONTENT_ATTACHMENT, MailMessage::ENCODING_BASE64);
 }
 
@@ -130,9 +130,9 @@ NotifierSmtp::NotifierSmtp(string tpath, const YAML::Node config) {
   if (filesystem::path(template_plain_path).is_relative())
     template_plain_path = fmt::format("{}/{}", base_path, template_plain_path);
 
-  if (!PathIsReadable(template_html_path)) 
+  if (!pathIsReadable(template_html_path)) 
     throw invalid_argument(fmt::format(CANT_READ, template_html_path));
-  if (!PathIsReadable(template_plain_path)) 
+  if (!pathIsReadable(template_plain_path)) 
     throw invalid_argument(fmt::format(CANT_READ, template_plain_path));
 
   host = config["host"].as<string>();
@@ -154,18 +154,18 @@ NotifierSmtp::NotifierSmtp(string tpath, const YAML::Node config) {
   
   if (port == 0) port = (isSSL) ? 465 : 25;
 
-	this->parameters = make_shared<unordered_map<string, string>>();
+	parameters = make_shared<unordered_map<string, string>>();
   
   if (config["parameters"])
     for(auto it=config["parameters"].begin();it!=config["parameters"].end();++it) {
       const auto param = it->first.as<std::string>();
       const auto value = it->second.as<std::string>();
       
-      this->parameters->insert(make_pair(param, value));
+      parameters->insert(make_pair(param, value));
     }
 }
 
-bool NotifierSmtp::DeliverMessage(MailMessage *message) {
+bool NotifierSmtp::deliverMessage(MailMessage *message) {
   if (isSSL) {
     Poco::SharedPtr<InvalidCertificateHandler> pCert = new AcceptCertificateHandler(false);
     Context::Ptr pContext = new Context(Context::CLIENT_USE, "", "", "", 
@@ -202,7 +202,7 @@ bool NotifierSmtp::DeliverMessage(MailMessage *message) {
   return true;
 }
 
-unique_ptr<inja::Environment> NotifierSmtp::GetInjaEnv() {
+unique_ptr<inja::Environment> NotifierSmtp::getInjaEnv() {
 
   attachments.clear();
 
@@ -263,13 +263,13 @@ unique_ptr<inja::Environment> NotifierSmtp::GetInjaEnv() {
     if(find(attachments.begin(), attachments.end(), attachment) == attachments.end())
       attachments.push_back(attachment);
 
-    return fmt::format("cid:{}", attachment.GetContentID());
+    return fmt::format("cid:{}", attachment.getContentID());
   });
   
   return env;
 }
 
-nlohmann::json NotifierSmtp::GetNow() {
+nlohmann::json NotifierSmtp::getNow() {
   auto ret = nlohmann::json::object();
   auto unix_now = time(nullptr);
   auto local_now = localtime( &unix_now );
@@ -288,7 +288,7 @@ nlohmann::json NotifierSmtp::GetNow() {
   return ret;
 }
 
-bool NotifierSmtp::SendResults(nlohmann::json *results) {
+bool NotifierSmtp::sendResults(nlohmann::json *results) {
   auto tmpl = *results;
 
   for (auto param : *parameters) tmpl[param.first] = param.second;
@@ -297,14 +297,14 @@ bool NotifierSmtp::SendResults(nlohmann::json *results) {
   tmpl["from"] = from;
   tmpl["subject"] = subject;
 
-  tmpl["now"] = GetNow();
+  tmpl["now"] = getNow();
 
   // Compile the email :
 	MailMessage message;
 	message.setSender(from);
 	message.addRecipient(MailRecipient(MailRecipient::PRIMARY_RECIPIENT, to));
 
-  auto inja = GetInjaEnv();
+  auto inja = getInjaEnv();
 
 	message.setSubject(inja->render(template_subject, tmpl));
 
@@ -321,10 +321,9 @@ bool NotifierSmtp::SendResults(nlohmann::json *results) {
 	message.addPart("", new StringPartSource(notification_in_html, "text/html"), 
     MailMessage::CONTENT_INLINE, MailMessage::ENCODING_QUOTED_PRINTABLE);
 
-  for (auto& attachment : attachments) 
-    attachment.AttachToMessage(&message);
+  for (auto& attachment : attachments) attachment.attachTo(&message);
 
-  return DeliverMessage(&message);
+  return deliverMessage(&message);
 }
 
 
