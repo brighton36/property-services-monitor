@@ -10,7 +10,7 @@ using namespace std;
 
 ServiceRegister<MonitorServiceWeb> MonitorServiceWeb::reg("web");
 
-MonitorServiceWeb::MonitorServiceWeb(string address, PTR_UMAP_STR params) 
+MonitorServiceWeb::MonitorServiceWeb(string address, PTR_MAP_STR_STR params) 
   : MonitorServiceBase("web", address, params) {
 
   // Default values:

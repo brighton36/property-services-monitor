@@ -5,7 +5,7 @@
 
 using namespace std;
 
-MonitorServiceFactory::map_type * MonitorServiceFactory::map = nullptr;
+shared_ptr<MonitorServiceFactory::map_type> MonitorServiceFactory::map = nullptr;
 
 bool pathIsReadable(string path) {
 	filesystem::path p(path);

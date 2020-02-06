@@ -24,7 +24,7 @@
 #endif
 
 // TODO :Change this label, and maybe make it unique...
-#define PTR_UMAP_STR std::shared_ptr<std::map<std::string, std::string>>
+#define PTR_MAP_STR_STR std::shared_ptr<std::map<std::string, std::string>>
 #define MISSING_FIELD "Missing \"{}\" field."
 
 bool pathIsReadable(std::string);
@@ -32,10 +32,10 @@ bool pathIsReadable(std::string);
 class MonitorServiceBase { 
   public:
     std::string address, type;
-    PTR_UMAP_STR params;
-    PTR_UMAP_STR results;
+    PTR_MAP_STR_STR params;
+    PTR_MAP_STR_STR results;
 
-    MonitorServiceBase(std::string, std::string, PTR_UMAP_STR);
+    MonitorServiceBase(std::string, std::string, PTR_MAP_STR_STR);
 
     virtual bool isAvailable();
 
@@ -48,15 +48,15 @@ class MonitorServiceBase {
 };
 
 template<typename T> std::shared_ptr<MonitorServiceBase> \
-  createT(std::string address, PTR_UMAP_STR params) {
+  createT(std::string address, PTR_MAP_STR_STR params) {
     return std::make_shared<T>(address, params); }
 
 struct MonitorServiceFactory {
   typedef std::map<std::string, std::shared_ptr<MonitorServiceBase>(*)( \
-    std::string address, PTR_UMAP_STR params)> map_type;
+    std::string address, PTR_MAP_STR_STR params)> map_type;
 
   static std::shared_ptr<MonitorServiceBase> createInstance(
-    std::string const& s, std::string address, PTR_UMAP_STR params) {
+    std::string const& s, std::string address, PTR_MAP_STR_STR params) {
 
     map_type::iterator it = getMap()->find(s);
     if(it == getMap()->end())
@@ -65,15 +65,13 @@ struct MonitorServiceFactory {
   }
 
   protected:
-    static map_type * getMap() {
-      if(!map) { map = new map_type; } 
+    static std::shared_ptr<map_type> getMap() {
+      if(!map) { map = std::make_shared<map_type>(); } 
       return map; 
     }
 
   private:
-    // I'm pretty sure this can't be a shared_ptr, and must exist until program
-    // termination, since we can't guarantee the destruction order:
-    static map_type * map;
+    static std::shared_ptr<map_type> map;
 };
 
 template<typename T>
@@ -86,7 +84,7 @@ struct ServiceRegister : MonitorServiceFactory {
 class MonitorServicePing : public MonitorServiceBase { 
   public:
     unsigned int tries, success_over;
-    MonitorServicePing(std::string, PTR_UMAP_STR);
+    MonitorServicePing(std::string, PTR_MAP_STR_STR);
     bool isAvailable();
   private:
     static ServiceRegister<MonitorServicePing> reg;
@@ -99,7 +97,7 @@ class MonitorServiceWeb : public MonitorServiceBase {
     std::string ensure_match;
 		bool isHttps;
 
-    MonitorServiceWeb(std::string, PTR_UMAP_STR);
+    MonitorServiceWeb(std::string, PTR_MAP_STR_STR);
     bool isAvailable();
     std::string httxRequest(std::string path, Poco::Net::HTTPResponse &response);
   private:
@@ -142,7 +140,7 @@ class NotifierSmtp {
     std::string template_subject, template_html_path, template_plain_path;
     unsigned int port;
     bool isSSL;
-    PTR_UMAP_STR parameters;
+    PTR_MAP_STR_STR parameters;
     std::vector<SmtpAttachment> attachments;
 
     NotifierSmtp(std::string, const YAML::Node);

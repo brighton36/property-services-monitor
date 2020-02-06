@@ -2,7 +2,7 @@
 
 using namespace std;
 
-MonitorServiceBase::MonitorServiceBase(string t, string a, PTR_UMAP_STR p) {
+MonitorServiceBase::MonitorServiceBase(string t, string a, PTR_MAP_STR_STR p) {
   type = t;
   address = a;
   params = p;

@@ -6,7 +6,7 @@ using namespace std;
 
 ServiceRegister<MonitorServicePing> MonitorServicePing::reg("ping");
 
-MonitorServicePing::MonitorServicePing(string address, PTR_UMAP_STR params) 
+MonitorServicePing::MonitorServicePing(string address, PTR_MAP_STR_STR params) 
   : MonitorServiceBase("ping", address, params) { 
 
   // Default values:
