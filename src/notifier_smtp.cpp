@@ -37,16 +37,14 @@ SmtpAttachment::SmtpAttachment(string base_path, string file_path) {
 	int length = is.tellg();
   if (length <= 0) throw invalid_argument(fmt::format(CANT_READ, full_path));
 	is.seekg(0, is.beg);
-	auto buffer = new char [length];
-	is.read(buffer,length);
+	auto buffer = make_unique<char[]>(length);
+	is.read(buffer.get(),length);
 
 	// Now let's get the hash of this file's contents:
 	RSADigestEngine eng(RSAKey(RSAKey::KL_2048, RSAKey::EXP_LARGE), "SHA256");
 
-	eng.update(buffer,length);
+	eng.update(buffer.get(),length);
 	contents_hash = Poco::DigestEngine::digestToHex(eng.digest());
-
-	delete buffer;
 }
 
 SmtpAttachment::SmtpAttachment(const SmtpAttachment &s2) {
@@ -206,7 +204,8 @@ unique_ptr<inja::Environment> NotifierSmtp::getInjaEnv() {
 
   attachments.clear();
 
-  unique_ptr<inja::Environment> env(new inja::Environment);
+  //unique_ptr<inja::Environment> env(new inja::Environment);
+  auto env = make_unique<inja::Environment>();
 
 	env->add_callback("h", 1, [](inja::Arguments& args) {
     string ret;
