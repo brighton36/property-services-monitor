@@ -31,7 +31,7 @@ MonitorJob::MonitorJob(const YAML::Node config) {
     for (const auto config_service: config_host["services"]) {
       string type;
       
-      PTR_UMAP_STR params = make_shared<unordered_map<string, string>>();
+      PTR_UMAP_STR params = make_shared<map<string, string>>();
 
       shared_ptr<MonitorServiceBase> service;
 

@@ -2,7 +2,6 @@
 #include <regex>
 #include <vector>
 #include <memory>
-#include <unordered_map> 
 #include <map> 
 #include <fmt/ostream.h>
 #include <filesystem>
@@ -24,7 +23,8 @@
 #define UNUSED
 #endif
 
-#define PTR_UMAP_STR std::shared_ptr<std::unordered_map<std::string, std::string>>
+// TODO :Change this label, and maybe make it unique...
+#define PTR_UMAP_STR std::shared_ptr<std::map<std::string, std::string>>
 #define MISSING_FIELD "Missing \"{}\" field."
 
 bool pathIsReadable(std::string);

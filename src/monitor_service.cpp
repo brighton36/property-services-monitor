@@ -6,7 +6,7 @@ MonitorServiceBase::MonitorServiceBase(string t, string a, PTR_UMAP_STR p) {
   type = t;
   address = a;
   params = p;
-  results = make_shared<unordered_map<string, string>>();
+  results = make_shared<map<string, string>>();
 }
 
 bool MonitorServiceBase::isAvailable() { 

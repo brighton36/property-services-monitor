@@ -154,7 +154,7 @@ NotifierSmtp::NotifierSmtp(string tpath, const YAML::Node config) {
   
   if (port == 0) port = (isSSL) ? 465 : 25;
 
-	parameters = make_shared<unordered_map<string, string>>();
+	parameters = make_shared<map<string, string>>();
   
   if (config["parameters"])
     for(auto it=config["parameters"].begin();it!=config["parameters"].end();++it) {
