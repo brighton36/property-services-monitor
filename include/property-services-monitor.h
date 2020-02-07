@@ -38,7 +38,6 @@ class MonitorServiceBase {
     MonitorServiceBase(std::string, std::string, PTR_MAP_STR_STR);
 
     virtual bool isAvailable();
-
   protected:
     bool resultAdd(std::string, std::string);
     template<typename... Args> bool resultFail(std::string reason, Args... args) {
@@ -64,7 +63,7 @@ struct MonitorServiceFactory {
     return it->second(address, params);
   }
 
-  protected:
+  public:
     static std::shared_ptr<map_type> getMap() {
       if(!map) { map = std::make_shared<map_type>(); } 
       return map; 
@@ -86,6 +85,7 @@ class MonitorServicePing : public MonitorServiceBase {
     unsigned int tries, success_over;
     MonitorServicePing(std::string, PTR_MAP_STR_STR);
     bool isAvailable();
+    static std::string Help();
   private:
     static ServiceRegister<MonitorServicePing> reg;
 }; 
@@ -100,9 +100,11 @@ class MonitorServiceWeb : public MonitorServiceBase {
     MonitorServiceWeb(std::string, PTR_MAP_STR_STR);
     bool isAvailable();
     std::string httxRequest(std::string path, Poco::Net::HTTPResponse &response);
+    static std::string Help();
   private:
     static ServiceRegister<MonitorServiceWeb> reg;
 }; 
+
 
 class MonitorHost { 
   public:

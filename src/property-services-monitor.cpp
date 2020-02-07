@@ -20,10 +20,38 @@ bool pathIsReadable(string path) {
 }
 
 int main(int argc, char* argv[]) {
-  if (argc < 2) {
-    fmt::print(cerr, "Usage: {} config.yml\n", argv[0]);
+	vector<string> args(argv + 1, argv + argc);
+  
+  // Help wanted?  
+  if ( (args.size() == 0 ) || (
+    find_if(args.begin(), args.end(), 
+      [] (string s) { return ((s == "-h") || (s == "--help")); }
+    ) != args.end() ) ) {
+
+    // todo: argv[0]?
+    string help = "Usage: property-services-monitor [config.yml]\n\n"
+      "The supplied argument is expected to be a yaml-formatted service monitor"
+      "definition file. The following options are supported.\n\n";
+
+    fmt::print(cout, help);
+		
+		// TODO: do the SmtpNotifier manually
+    //
+    auto m = MonitorServiceFactory::getMap();
+		for(auto it = m->begin(); it != m->end(); it++) {
+      //auto service_class = (MonitorServiceBase *) it->second;
+      //cout<< "Service Module:" << it->first << " \n";
+      //cout<< "  help:" << it->service_class::Help() << " \n";
+      cout << MonitorServicePing::Help();
+		}
+
+    // TODO: merbe link to the github at the bottom
+
     return 1;
   }
+
+  // Seems like we were given a configuration file to parse:
+  const auto config_path = args[0];
 
   MonitorJob job;
   NotifierSmtp notifier;
@@ -31,7 +59,6 @@ int main(int argc, char* argv[]) {
 
   // Load and Verify the config :
   try {
-    const auto config_path = string(argv[1]);
     const auto config = YAML::LoadFile(config_path);
 
     base_path = filesystem::path(filesystem::canonical(config_path)).parent_path();
@@ -44,6 +71,7 @@ int main(int argc, char* argv[]) {
       throw invalid_argument(fmt::format(MISSING_FIELD, "notification"));
 
     job = MonitorJob(config["hosts"]);
+
     notifier = NotifierSmtp(base_path, config["notification"]);
   } catch(const YAML::Exception& e) {
     fmt::print(cerr, "YAML Exception: {}\n", e.what());
