@@ -6,6 +6,8 @@
 using namespace std;
 
 shared_ptr<MonitorServiceFactory::map_type> MonitorServiceFactory::map = nullptr;
+// TODO: I think we can do better:
+shared_ptr<MonitorServiceFactory::map_help> MonitorServiceFactory::mapHelp = nullptr;
 
 bool pathIsReadable(string path) {
 	filesystem::path p(path);
@@ -31,18 +33,15 @@ int main(int argc, char* argv[]) {
     // todo: argv[0]?
     string help = "Usage: property-services-monitor [config.yml]\n\n"
       "The supplied argument is expected to be a yaml-formatted service monitor"
-      "definition file. The following options are supported.\n\n";
+      " definition file. The following options are supported.\n\n";
 
     fmt::print(cout, help);
 		
 		// TODO: do the SmtpNotifier manually
     //
-    auto m = MonitorServiceFactory::getMap();
-		for(auto it = m->begin(); it != m->end(); it++) {
-      //auto service_class = (MonitorServiceBase *) it->second;
-      //cout<< "Service Module:" << it->first << " \n";
-      //cout<< "  help:" << it->service_class::Help() << " \n";
-      cout << MonitorServicePing::Help();
+    for (string service : MonitorServiceFactory::getRegistrations()) {
+      cout<< "Service Module:" << service << " \n";
+      cout << MonitorServiceFactory::getHelp(service) << "\n";
 		}
 
     // TODO: merbe link to the github at the bottom

@@ -38,6 +38,7 @@ class MonitorServiceBase {
     MonitorServiceBase(std::string, std::string, PTR_MAP_STR_STR);
 
     virtual bool isAvailable();
+    static std::string Help(){ return "TODO";};
   protected:
     bool resultAdd(std::string, std::string);
     template<typename... Args> bool resultFail(std::string reason, Args... args) {
@@ -50,9 +51,13 @@ template<typename T> std::shared_ptr<MonitorServiceBase> \
   createT(std::string address, PTR_MAP_STR_STR params) {
     return std::make_shared<T>(address, params); }
 
+template<typename T> std::string helpT() { return T::Help(); }
+
 struct MonitorServiceFactory {
   typedef std::map<std::string, std::shared_ptr<MonitorServiceBase>(*)( \
     std::string address, PTR_MAP_STR_STR params)> map_type;
+
+  typedef std::map<std::string, std::string (*)()> map_help;
 
   static std::shared_ptr<MonitorServiceBase> createInstance(
     std::string const& s, std::string address, PTR_MAP_STR_STR params) {
@@ -64,19 +69,47 @@ struct MonitorServiceFactory {
   }
 
   public:
+    static std::vector<std::string> getRegistrations() {
+      std::vector<std::string> ret; 
+      // TODO: 
+      /*for (auto& pair : MonitorServiceFactory::getMap()) */
+      /*ret.push_back(pair.first)*/
+      auto m = MonitorServiceFactory::getMap();
+      for(auto it = m->begin(); it != m->end(); it++)
+        ret.push_back(it->first);
+
+      return ret;
+    }
+
+    static std::string getHelp(std::string service) {
+      map_help::iterator it = getMapHelp()->find(service);
+      
+      if(it == getMapHelp()->end())
+        return 0;
+
+      return it->second();
+    }
+
+  protected:
     static std::shared_ptr<map_type> getMap() {
       if(!map) { map = std::make_shared<map_type>(); } 
       return map; 
     }
+    static std::shared_ptr<map_help> getMapHelp() {
+      if(!mapHelp) { mapHelp = std::make_shared<map_help>(); } 
+      return mapHelp; 
+    }
 
   private:
     static std::shared_ptr<map_type> map;
+    static std::shared_ptr<map_help> mapHelp;
 };
 
 template<typename T>
 struct ServiceRegister : MonitorServiceFactory { 
   ServiceRegister(std::string const& s) { 
     getMap()->insert(std::make_pair(s, &createT<T>));
+    getMapHelp()->insert(std::make_pair(s, &helpT<T>));
   }
 };
 

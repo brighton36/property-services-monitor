@@ -10,7 +10,9 @@ using namespace std;
 
 ServiceRegister<MonitorServiceWeb> MonitorServiceWeb::reg("web");
 
-std::string MonitorServiceWeb::Help() { return std::string("MonitorServiceWeb::Help"); }
+std::string MonitorServiceWeb::Help() {
+  return std::string("MonitorServiceWeb::Help");
+}
 
 MonitorServiceWeb::MonitorServiceWeb(string address, PTR_MAP_STR_STR params) 
   : MonitorServiceBase("web", address, params) {
