@@ -53,22 +53,30 @@ template<typename T> std::shared_ptr<MonitorServiceBase> \
 
 template<typename T> std::string helpT() { return T::Help(); }
 
+struct MonitorServiceMapEntry{
+  public:
+    std::shared_ptr<MonitorServiceBase>(*constructor)(std::string address, PTR_MAP_STR_STR params);
+    std::string (*help)();
+};
+
 struct MonitorServiceFactory {
-  typedef std::map<std::string, std::shared_ptr<MonitorServiceBase>(*)( \
-    std::string address, PTR_MAP_STR_STR params)> map_type;
-
-  typedef std::map<std::string, std::string (*)()> map_help;
-
-  static std::shared_ptr<MonitorServiceBase> createInstance(
-    std::string const& s, std::string address, PTR_MAP_STR_STR params) {
-
-    map_type::iterator it = getMap()->find(s);
-    if(it == getMap()->end())
-      return 0;
-    return it->second(address, params);
-  }
+  typedef std::map<std::string, MonitorServiceMapEntry> map_type;
 
   public:
+    static std::shared_ptr<MonitorServiceBase> createInstance(
+      std::string const& s, std::string address, PTR_MAP_STR_STR params) {
+
+      map_type::iterator it = getMap()->find(s);
+      if(it == getMap()->end()) return 0;
+      return it->second.constructor(address, params);
+    }
+
+    static std::string getHelp(std::string const &s) {
+      map_type::iterator it = getMap()->find(s);
+      if(it == getMap()->end()) return 0;
+      return it->second.help();
+    }
+
     static std::vector<std::string> getRegistrations() {
       std::vector<std::string> ret; 
       // TODO: 
@@ -81,35 +89,24 @@ struct MonitorServiceFactory {
       return ret;
     }
 
-    static std::string getHelp(std::string service) {
-      map_help::iterator it = getMapHelp()->find(service);
-      
-      if(it == getMapHelp()->end())
-        return 0;
-
-      return it->second();
-    }
-
   protected:
     static std::shared_ptr<map_type> getMap() {
       if(!map) { map = std::make_shared<map_type>(); } 
       return map; 
     }
-    static std::shared_ptr<map_help> getMapHelp() {
-      if(!mapHelp) { mapHelp = std::make_shared<map_help>(); } 
-      return mapHelp; 
-    }
 
   private:
     static std::shared_ptr<map_type> map;
-    static std::shared_ptr<map_help> mapHelp;
 };
 
 template<typename T>
 struct ServiceRegister : MonitorServiceFactory { 
   ServiceRegister(std::string const& s) { 
-    getMap()->insert(std::make_pair(s, &createT<T>));
-    getMapHelp()->insert(std::make_pair(s, &helpT<T>));
+    MonitorServiceMapEntry me;
+    me.constructor = &createT<T>;
+    me.help = &helpT<T>;
+
+    getMap()->insert(std::make_pair(s, me));
   }
 };
 

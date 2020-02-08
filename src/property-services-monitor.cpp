@@ -6,8 +6,6 @@
 using namespace std;
 
 shared_ptr<MonitorServiceFactory::map_type> MonitorServiceFactory::map = nullptr;
-// TODO: I think we can do better:
-shared_ptr<MonitorServiceFactory::map_help> MonitorServiceFactory::mapHelp = nullptr;
 
 bool pathIsReadable(string path) {
 	filesystem::path p(path);
