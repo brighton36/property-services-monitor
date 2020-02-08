@@ -3,6 +3,9 @@
 #include "Poco/Net/NetException.h"
 #include "Poco/Net/MailRecipient.h"
 
+#define INCLUDES_HELP(v) (find_if((v).begin(), (v).end(), \
+  [] (string s) { return ((s == "-h") || (s == "--help")); } ) != (v).end())
+
 using namespace std;
 
 shared_ptr<MonitorServiceFactory::map_type> MonitorServiceFactory::map = nullptr;
@@ -23,25 +26,22 @@ int main(int argc, char* argv[]) {
 	vector<string> args(argv + 1, argv + argc);
   
   // Help wanted?  
-  if ( (args.size() == 0 ) || (
-    find_if(args.begin(), args.end(), 
-      [] (string s) { return ((s == "-h") || (s == "--help")); }
-    ) != args.end() ) ) {
+  if ( (args.size() == 0 ) || INCLUDES_HELP(args) ) {
+    string help = fmt::format("Usage: {} [config.yml]\n\n"
+      "The supplied argument is expected to be a yaml-formatted service monitor definition file.\n"
+      "(See https://en.wikipedia.org/wiki/YAML for details on the YAML file format.)\n\n"
+      "The following sections and parameters are supported in your supplied config file.\n\n"
+      "At the root of the config file, two maps are required: \"notification\""
+      " and \"hosts\".\n\n", argv[0]);
 
-    // todo: argv[0]?
-    string help = "Usage: property-services-monitor [config.yml]\n\n"
-      "The supplied argument is expected to be a yaml-formatted service monitor"
-      " definition file. The following options are supported.\n\n";
+    help.append(NotifierSmtp::Help());
 
-    fmt::print(cout, help);
-		
-		// TODO: do the SmtpNotifier manually
-    //
+
     for (string service : MonitorServiceFactory::getRegistrations()) {
-      cout<< "Service Module:" << service << " \n";
-      cout << MonitorServiceFactory::getHelp(service) << "\n";
+      help.append(MonitorServiceFactory::getHelp(service));
 		}
 
+    cout << help; 
     // TODO: merbe link to the github at the bottom
 
     return 1;

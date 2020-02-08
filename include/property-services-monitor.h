@@ -23,7 +23,6 @@
 #define UNUSED
 #endif
 
-// TODO :Change this label, and maybe make it unique...
 #define PTR_MAP_STR_STR std::shared_ptr<std::map<std::string, std::string>>
 #define MISSING_FIELD "Missing \"{}\" field."
 
@@ -38,7 +37,6 @@ class MonitorServiceBase {
     MonitorServiceBase(std::string, std::string, PTR_MAP_STR_STR);
 
     virtual bool isAvailable();
-    static std::string Help(){ return "TODO";};
   protected:
     bool resultAdd(std::string, std::string);
     template<typename... Args> bool resultFail(std::string reason, Args... args) {
@@ -79,13 +77,8 @@ struct MonitorServiceFactory {
 
     static std::vector<std::string> getRegistrations() {
       std::vector<std::string> ret; 
-      // TODO: 
-      /*for (auto& pair : MonitorServiceFactory::getMap()) */
-      /*ret.push_back(pair.first)*/
       auto m = MonitorServiceFactory::getMap();
-      for(auto it = m->begin(); it != m->end(); it++)
-        ret.push_back(it->first);
-
+      for(auto it = m->begin(); it != m->end(); it++) ret.push_back(it->first);
       return ret;
     }
 
@@ -179,6 +172,7 @@ class NotifierSmtp {
     NotifierSmtp() {};
     bool sendResults(nlohmann::json*);
     bool deliverMessage(Poco::Net::MailMessage *message);
+    static std::string Help();
   private:
     nlohmann::json getNow();
     std::unique_ptr<inja::Environment> getInjaEnv();

@@ -96,6 +96,27 @@ void SmtpAttachment::attachTo(MailMessage *m) {
     MailMessage::CONTENT_ATTACHMENT, MailMessage::ENCODING_BASE64);
 }
 
+std::string NotifierSmtp::Help() {
+  return "The \"notification\" map supports the following parameters:\n"
+    " * to               (required) A valid SMTP address to which the notification will be delivered.\n"
+    " * from             (required) A valid SMTP address from which the notification will be address.\n"
+    " * subject          (required) The Subject line of the e-mail notification.\n"
+    " * template_html    (optional) A relative or absolute path to an inja template, used \n"
+    "                               for constructing the email html body\n"
+    " * template_plain   (optional) A relative or absolute path to an inja template, used \n"
+    "                               for constructing the email plain text body\n"    
+    " * template_subject (optional) An inja string used to format the smtp subject line\n"
+    " * host             (required) The fqdn or ip address of the smtp server to use for relaying.\n"
+    " * proto            (optional) Either \"plain\" or \"ssl\". Defaults to \"plain\".\n"
+    " * port             (optional) The port number of the smtp relay server. Defaults to 25 (plain)\n"
+    "                               or 465 (ssl), depending on the \"proto\" value. \n"
+    " * username         (required) the login credential for the smtp relay server.\n"
+    " * password         (required) the password credential for the smtp relay server.\n"
+    " * parameters       (optional) a key to value map. These parameters are passed to the template\n"
+    "                               files, as specified. See the included template files for what values\n"
+    "                               are supported here by the shipped templates. Feel free to add any\n"
+    "                               values of your own.\n";
+}
 
 NotifierSmtp::NotifierSmtp(string tpath, const YAML::Node config) {
 
@@ -204,7 +225,6 @@ unique_ptr<inja::Environment> NotifierSmtp::getInjaEnv() {
 
   attachments.clear();
 
-  //unique_ptr<inja::Environment> env(new inja::Environment);
   auto env = make_unique<inja::Environment>();
 
 	env->add_callback("h", 1, [](inja::Arguments& args) {

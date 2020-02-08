@@ -6,7 +6,9 @@ using namespace std;
 
 ServiceRegister<MonitorServicePing> MonitorServicePing::reg("ping");
 
-std::string MonitorServicePing::Help() { return std::string("MonitorServicePing::Help"); }
+std::string MonitorServicePing::Help() { 
+  return std::string("MonitorServicePing::Help\n");
+}
 
 MonitorServicePing::MonitorServicePing(string address, PTR_MAP_STR_STR params) 
   : MonitorServiceBase("ping", address, params) { 
