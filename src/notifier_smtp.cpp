@@ -101,12 +101,12 @@ std::string NotifierSmtp::Help() {
     " * to               (required) A valid SMTP address to which the notification will be delivered.\n"
     " * from             (required) A valid SMTP address from which the notification will be address.\n"
     " * subject          (required) The Subject line of the e-mail notification.\n"
+    " * host             (required) The fqdn or ip address of the smtp server to use for relaying.\n"
     " * template_html    (optional) A relative or absolute path to an inja template, used \n"
     "                               for constructing the email html body\n"
     " * template_plain   (optional) A relative or absolute path to an inja template, used \n"
     "                               for constructing the email plain text body\n"    
     " * template_subject (optional) An inja string used to format the smtp subject line\n"
-    " * host             (required) The fqdn or ip address of the smtp server to use for relaying.\n"
     " * proto            (optional) Either \"plain\" or \"ssl\". Defaults to \"plain\".\n"
     " * port             (optional) The port number of the smtp relay server. Defaults to 25 (plain)\n"
     "                               or 465 (ssl), depending on the \"proto\" value. \n"
@@ -126,10 +126,6 @@ NotifierSmtp::NotifierSmtp(string tpath, const YAML::Node config) {
     throw invalid_argument(fmt::format(MISSING_FIELD, "from"));
   if (!config["subject"]) 
     throw invalid_argument(fmt::format(MISSING_FIELD, "subject"));
-  if (!config["template_html"]) 
-    throw invalid_argument(fmt::format(MISSING_FIELD, "template_html"));
-  if (!config["template_plain"]) 
-    throw invalid_argument(fmt::format(MISSING_FIELD, "template_plain"));
   if (!config["host"]) 
     throw invalid_argument(fmt::format(MISSING_FIELD, "host"));
 
@@ -137,17 +133,20 @@ NotifierSmtp::NotifierSmtp(string tpath, const YAML::Node config) {
   to = config["to"].as<string>();
   from = config["from"].as<string>();
   subject = config["subject"].as<string>();
-  template_html_path = config["template_html"].as<string>();
-  template_plain_path = config["template_plain"].as<string>();
+
+  string executable_path = filesystem::path(
+    filesystem::read_symlink("/proc/self/exe")).parent_path();
+
+  template_html_path = (config["template_html"]) ? 
+    toFullPath(base_path, config["template_html"].as<string>()) :
+    toFullPath(executable_path, "views/notify.html.inja");
+
+  template_plain_path = (config["template_plain"]) ? 
+    toFullPath(base_path, config["template_plain"].as<string>()) :
+    toFullPath(executable_path, "views/notify.plain.inja");
 
   template_subject = (config["template_subject"]) ? 
     config["template_subject"].as<string>() : DEFAULT_TEMPLATE_SUBJECT;
-
-  if (filesystem::path(template_html_path).is_relative())
-    template_html_path = fmt::format("{}/{}", base_path, template_html_path);
-
-  if (filesystem::path(template_plain_path).is_relative())
-    template_plain_path = fmt::format("{}/{}", base_path, template_plain_path);
 
   if (!pathIsReadable(template_html_path)) 
     throw invalid_argument(fmt::format(CANT_READ, template_html_path));
@@ -182,6 +181,12 @@ NotifierSmtp::NotifierSmtp(string tpath, const YAML::Node config) {
       
       parameters->insert(make_pair(param, value));
     }
+}
+
+// If file isn't a full path, we make it one, using the provided base
+string NotifierSmtp::toFullPath(string base, string file) {
+  return (filesystem::path(file).is_relative()) ? 
+    fmt::format("{}/{}", base, file) : file;
 }
 
 bool NotifierSmtp::deliverMessage(MailMessage *message) {
@@ -276,6 +281,7 @@ unique_ptr<inja::Environment> NotifierSmtp::getInjaEnv() {
   });
 
 	env->add_callback("image_src", 1, [&](inja::Arguments& args) {
+    // TODO: This should be canonical template path
     auto attachment = SmtpAttachment(base_path, args.at(0)->get<string>());
     
     // If it's not already in the attachments vector, add it:

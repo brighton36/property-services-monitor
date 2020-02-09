@@ -67,8 +67,11 @@ int main(int argc, char* argv[]) {
 			help.append(fmt::format( "\n For \"{}\" service types:\n{}", 
 				service,MonitorServiceFactory::getHelp(service) ));
 
+    help.append(
+			"\nFor more information about this program, see the github repo at:\n"
+			"  https://github.com/brighton36/property-services-monitor/\n" );
+
     cout << help; 
-    // TODO: merbe link to the github at the bottom
 
     return 1;
   }
@@ -85,7 +88,6 @@ int main(int argc, char* argv[]) {
     const auto config = YAML::LoadFile(config_path);
 
     base_path = filesystem::path(filesystem::canonical(config_path)).parent_path();
-
 
     if (!config["hosts"]) 
       throw invalid_argument(fmt::format(MISSING_FIELD, "hosts"));
@@ -129,6 +131,10 @@ int main(int argc, char* argv[]) {
   } catch (Poco::Net::SMTPException &e) {
     fmt::print(cerr, "SMTP Exception Encountered: {} {} {} {}\n", 
       e.code(), e.what(), e.message(), e.displayText().c_str() );
+    return 1;
+  } catch (Poco::FileNotFoundException &e) {
+    // TODO: Catch all these Poco exceptions into this:
+    fmt::print(cerr, "Exception Encountered: {} \n", e.displayText() );
     return 1;
   }
   catch (Poco::Net::NetException &e) {

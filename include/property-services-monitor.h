@@ -175,6 +175,7 @@ class NotifierSmtp {
     static std::string Help();
   private:
     nlohmann::json getNow();
+    std::string toFullPath(std::string, std::string);
     std::unique_ptr<inja::Environment> getInjaEnv();
 };
 

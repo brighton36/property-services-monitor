@@ -3,6 +3,7 @@ CXX ?= g++
 SRC_PATH = ./src
 BUILD_PATH = build
 BIN_PATH = $(BUILD_PATH)/bin
+VIEWS_PATH = $(realpath ./views)
 BIN_NAME = property-services-monitor
 SRC_EXT = cpp
 
@@ -43,6 +44,7 @@ all: $(BIN_PATH)/$(BIN_NAME)
 	@echo "Making symlink: $(BIN_NAME) -> $<"
 	@$(RM) $(BIN_NAME)
 	@ln -s $(BIN_PATH)/$(BIN_NAME) $(BIN_NAME)
+	@if [ ! -d "$(BIN_PATH)/views" ]; then ln -s $(VIEWS_PATH) $(BIN_PATH)/views; fi
 
 # Creation of the executable
 $(BIN_PATH)/$(BIN_NAME): $(OBJECTS)
