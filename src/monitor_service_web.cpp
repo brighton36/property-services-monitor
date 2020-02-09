@@ -11,7 +11,17 @@ using namespace std;
 ServiceRegister<MonitorServiceWeb> MonitorServiceWeb::reg("web");
 
 std::string MonitorServiceWeb::Help() {
-  return std::string("MonitorServiceWeb::Help\n");
+  return fmt::format(
+    " * proto          (optional) Either \"http\" or \"https\". Defaults to \"http\".\n"
+    " * port           (optional) The port number of the http service. Defaults to 80 (http) or\n"
+		"                             443 (https), depending on the proto value.\n"
+    " * path           (optional) The resource path being request from the http server. Defaults\n"
+		"                             to \"/\".\n"
+    " * status_equals  (optional) The expected HTTP status code, to be received from the server.\n"
+		"                             Defaults to {}.\n"
+    " * ensure_match   (optional) A regular expression to be found in the return content body.\n"
+		"                             This regex is expected to be in the C++ regex format (no /'s).\n", 
+		Poco::Net::HTTPResponse::HTTP_OK );
 }
 
 MonitorServiceWeb::MonitorServiceWeb(string address, PTR_MAP_STR_STR params) 
@@ -37,6 +47,8 @@ MonitorServiceWeb::MonitorServiceWeb(string address, PTR_MAP_STR_STR params)
       port = stoi(n.second);
     else if ("path" == n.first)
       path = n.second;
+    else if ("status_equals" == n.first)
+      status_equals = stoi(n.second);
     else if ("ensure_match" == n.first)
       ensure_match = n.second;
     else

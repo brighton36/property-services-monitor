@@ -31,15 +31,41 @@ int main(int argc, char* argv[]) {
       "The supplied argument is expected to be a yaml-formatted service monitor definition file.\n"
       "(See https://en.wikipedia.org/wiki/YAML for details on the YAML file format.)\n\n"
       "The following sections and parameters are supported in your supplied config file.\n\n"
-      "At the root of the config file, two maps are required: \"notification\""
+      "At the root of the config file, two parameters are required: \"notification\""
       " and \"hosts\".\n\n", argv[0]);
 
     help.append(NotifierSmtp::Help());
 
+    help.append(
+      "\nThe \"hosts\" (sequence) is expected to provide an itemization of the systems being monitored.\n"
+      "Each host item in the sequence is itself a (map). \n\n"
+      "The format of each host's (map) is as follows:\n"
+      " * address     (required) The FQDN or IP address of the host.\n"
+      " * label       (required) The human-readable moniker of this host. Used in the output report.\n"
+      " * description (required) A description of the host, for use in the output report.\n"
+      " * services    (required) A (sequence) of services to test, that are expected to be running on\n"
+      "                          this host. See below for details.\n\n"
+    );
 
-    for (string service : MonitorServiceFactory::getRegistrations()) {
-      help.append(MonitorServiceFactory::getHelp(service));
-		}
+		auto services = MonitorServiceFactory::getRegistrations();
+	
+		string services_joined = accumulate( next(services.begin()), services.end(), 
+			services[0], [](string a, string b) { return fmt::format("\"{}\", \"{}\"",a,b);} );
+
+    help.append(fmt::format(
+      "The \"services\" (sequence) is expected to provide an itemization of the service being tested\n"
+      "for availability. Each service in the sequence is itself a (map).\n\n"
+      "The format of service's (map) is as follows:\n"
+      " * type           (required) The type of service being tested. The type must be one of the\n"
+      "                             following supported types: {}.\n\n"
+			"                             Depending on the value of this parameter, additional sequence\n"
+			"                             options may be available. in this service's map section. What\n"
+			"                             follows are type-specific parameters.\n", 
+			services_joined ));
+
+    for (string service : services)
+			help.append(fmt::format( "\n For \"{}\" service types:\n{}", 
+				service,MonitorServiceFactory::getHelp(service) ));
 
     cout << help; 
     // TODO: merbe link to the github at the bottom

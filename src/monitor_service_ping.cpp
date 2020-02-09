@@ -7,7 +7,9 @@ using namespace std;
 ServiceRegister<MonitorServicePing> MonitorServicePing::reg("ping");
 
 std::string MonitorServicePing::Help() { 
-  return std::string("MonitorServicePing::Help\n");
+  return 
+    " * tries          (optional) The number of pings to attempt. Defaults to 5.\n"
+    " * success_over   (optional) The number of pings, over which we are successful. Defaults to 4.\n";
 }
 
 MonitorServicePing::MonitorServicePing(string address, PTR_MAP_STR_STR params) 

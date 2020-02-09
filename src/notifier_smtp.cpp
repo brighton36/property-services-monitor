@@ -97,7 +97,7 @@ void SmtpAttachment::attachTo(MailMessage *m) {
 }
 
 std::string NotifierSmtp::Help() {
-  return "The \"notification\" map supports the following parameters:\n"
+  return "The \"notification\" (map) supports the following parameters:\n"
     " * to               (required) A valid SMTP address to which the notification will be delivered.\n"
     " * from             (required) A valid SMTP address from which the notification will be address.\n"
     " * subject          (required) The Subject line of the e-mail notification.\n"
@@ -110,9 +110,9 @@ std::string NotifierSmtp::Help() {
     " * proto            (optional) Either \"plain\" or \"ssl\". Defaults to \"plain\".\n"
     " * port             (optional) The port number of the smtp relay server. Defaults to 25 (plain)\n"
     "                               or 465 (ssl), depending on the \"proto\" value. \n"
-    " * username         (required) the login credential for the smtp relay server.\n"
-    " * password         (required) the password credential for the smtp relay server.\n"
-    " * parameters       (optional) a key to value map. These parameters are passed to the template\n"
+    " * username         (optional) The login credential for the smtp relay server.\n"
+    " * password         (optional) The password credential for the smtp relay server.\n"
+    " * parameters       (optional) A key to value (map). These parameters are passed to the template\n"
     "                               files, as specified. See the included template files for what values\n"
     "                               are supported here by the shipped templates. Feel free to add any\n"
     "                               values of your own.\n";
