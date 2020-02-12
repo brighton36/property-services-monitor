@@ -70,7 +70,7 @@ nlohmann::json MonitorJob::toJson() {
   nlohmann::json ret;
 
   ret["has_failures"] = false;
-	ret["hosts"] = nlohmann::json::array();
+  ret["hosts"] = nlohmann::json::array();
 
   for (const auto host: hosts) {
     auto json_host = nlohmann::json::object();

@@ -119,7 +119,7 @@ class MonitorServiceWeb : public MonitorServiceBase {
     unsigned int port, status_equals;
     std::string path;
     std::string ensure_match;
-		bool isHttps;
+    bool isHttps;
 
     MonitorServiceWeb(std::string, PTR_MAP_STR_STR);
     bool isAvailable();
@@ -174,13 +174,14 @@ class NotifierSmtp {
     NotifierSmtp() {};
     bool sendResults(nlohmann::json*);
     bool deliverMessage(Poco::Net::MailMessage *);
-    std::string renderFile(const std::string, const nlohmann::json *);
     static std::string Help();
   private:
     nlohmann::json getNow();
     std::string current_template_path;
     std::string toFullPath(std::string, std::string);
     std::unique_ptr<inja::Environment> getInjaEnv();
+    std::string renderHtml(const std::string, const nlohmann::json *);
+    std::string renderPlain(const std::string, const nlohmann::json *);
 };
 
 #endif

@@ -1,11 +1,11 @@
 <table width="100%" border="0" cellspacing="0" cellpadding="0">
   <tr>
     <td width="260" align="center" valign="top" cellspacing="2">
-			<img width="228" height="152" src="{{ image_src(default(thumbnail, "images/home.jpg")) }}" />
-		</td>
+      <img width="228" height="152" src="{{ image_src(default(thumbnail, "images/home.jpg")) }}" />
+    </td>
     <td valign="top">
       <h1>{{ h(subject) }}</h1>
-				{% if has_failures %}
+        {% if has_failures %}
         <h2 class="color-failed">Network Status: Errors Encounted.</h2>
         {% else %}
         <h2 class="color-passed">Network Status: Online/Functional.</h2>

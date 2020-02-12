@@ -25,31 +25,31 @@ using namespace Poco::Net;
 using namespace Poco::Crypto;
 
 SmtpAttachment::SmtpAttachment(string base_path, string file_path) {
-	setFilepath( (filesystem::path(file_path).is_relative()) ? 
+  setFilepath( (filesystem::path(file_path).is_relative()) ? 
     fmt::format("{}/{}", base_path, file_path) : file_path );
 
   if (!pathIsReadable(full_path)) 
     throw invalid_argument(fmt::format(CANT_READ, full_path));
 
-	// Read the file into a buffer:
+  // Read the file into a buffer:
   auto &is = file_part_source->stream();
-	is.seekg(0, is.end);
-	int length = is.tellg();
+  is.seekg(0, is.end);
+  int length = is.tellg();
   if (length <= 0) throw invalid_argument(fmt::format(CANT_READ, full_path));
-	is.seekg(0, is.beg);
-	auto buffer = make_unique<char[]>(length);
-	is.read(buffer.get(),length);
+  is.seekg(0, is.beg);
+  auto buffer = make_unique<char[]>(length);
+  is.read(buffer.get(),length);
 
-	// Now let's get the hash of this file's contents:
-	RSADigestEngine eng(RSAKey(RSAKey::KL_2048, RSAKey::EXP_LARGE), "SHA256");
+  // Now let's get the hash of this file's contents:
+  RSADigestEngine eng(RSAKey(RSAKey::KL_2048, RSAKey::EXP_LARGE), "SHA256");
 
-	eng.update(buffer.get(),length);
-	contents_hash = Poco::DigestEngine::digestToHex(eng.digest());
+  eng.update(buffer.get(),length);
+  contents_hash = Poco::DigestEngine::digestToHex(eng.digest());
 }
 
 SmtpAttachment::SmtpAttachment(const SmtpAttachment &s2) {
   setFilepath(s2.full_path);
-	contents_hash = s2.contents_hash;
+  contents_hash = s2.contents_hash;
 }
 
 bool SmtpAttachment::operator==(const SmtpAttachment &s2) {
@@ -57,9 +57,9 @@ bool SmtpAttachment::operator==(const SmtpAttachment &s2) {
 }
 
 void SmtpAttachment::setFilepath(std::string f) {
-	full_path = f;
+  full_path = f;
 
-	// Let's figure out what kind of file it is based off the extension:
+  // Let's figure out what kind of file it is based off the extension:
   std::smatch matches;
 
   if (!regex_search(full_path, matches, regex("([^\\.]+)$")) || (matches.size() != 2))
@@ -172,7 +172,7 @@ NotifierSmtp::NotifierSmtp(string tpath, const YAML::Node config) {
   
   if (port == 0) port = (isSSL) ? 465 : 25;
 
-	parameters = make_shared<map<string, string>>();
+  parameters = make_shared<map<string, string>>();
   
   if (config["parameters"])
     for(auto it=config["parameters"].begin();it!=config["parameters"].end();++it) {
@@ -202,25 +202,25 @@ bool NotifierSmtp::deliverMessage(MailMessage *message) {
     SecureSMTPClientSession session(pSSLSocket);
 
     session.login();
-		if (!username.empty()) {
+    if (!username.empty()) {
       // NOTE: The TLS May fail, or may succeed. It seems like there's no reason 
       // not to try if we're already SSL encrypted.
-			session.startTLS(pContext);
-			session.login(SMTPClientSession::AUTH_LOGIN, username, password);
-		}
+      session.startTLS(pContext);
+      session.login(SMTPClientSession::AUTH_LOGIN, username, password);
+    }
 
     session.sendMessage(*message);
     session.close();
   } else {
     // NOTE: This code path is untested. My ISP blocks outbound port 25, and I
     // don't really care to spend the time testing this.
-		SMTPClientSession session(host, port); 
+    SMTPClientSession session(host, port); 
 
-		session.login();
-		if (!username.empty())
-			session.login(SMTPClientSession::AUTH_LOGIN, username, password);
-		session.sendMessage(*message);
-		session.close();
+    session.login();
+    if (!username.empty())
+      session.login(SMTPClientSession::AUTH_LOGIN, username, password);
+    session.sendMessage(*message);
+    session.close();
   }
 
   return true;
@@ -232,27 +232,27 @@ unique_ptr<inja::Environment> NotifierSmtp::getInjaEnv() {
 
   auto env = make_unique<inja::Environment>();
 
-	env->add_callback("h", 1, [](inja::Arguments& args) {
+  env->add_callback("h", 1, [](inja::Arguments& args) {
     string ret;
-		string s = args.at(0)->get<string>();
+    string s = args.at(0)->get<string>();
 
     ret.reserve(s.size());
     for(size_t pos = 0; pos != s.size(); ++pos) {
-			switch(s[pos]) {
-				case '&':  ret.append("&amp;");    break;
-				case '\"': ret.append("&quot;");   break;
-				case '\'': ret.append("&apos;");   break;
-				case '<':  ret.append("&lt;");     break;
-				case '>':  ret.append("&gt;");     break;
-				default:   ret.append(&s[pos], 1); break;
-			}
+      switch(s[pos]) {
+        case '&':  ret.append("&amp;");    break;
+        case '\"': ret.append("&quot;");   break;
+        case '\'': ret.append("&apos;");   break;
+        case '<':  ret.append("&lt;");     break;
+        case '>':  ret.append("&gt;");     break;
+        default:   ret.append(&s[pos], 1); break;
+      }
     }
 
-		return ret;
-	});
+    return ret;
+  });
 
-	env->add_callback("f", 2, [](inja::Arguments& args) {
-		string formatter = args.at(0)->get<string>();
+  env->add_callback("f", 2, [](inja::Arguments& args) {
+    string formatter = args.at(0)->get<string>();
     auto p = args.at(1);
 
     switch ( p->type() ) {
@@ -280,7 +280,7 @@ unique_ptr<inja::Environment> NotifierSmtp::getInjaEnv() {
     return string();
   });
 
-	env->add_callback("image_src", 1, [&](inja::Arguments& args) {
+  env->add_callback("image_src", 1, [&](inja::Arguments& args) {
     auto attachment = SmtpAttachment(
       filesystem::path(current_template_path).parent_path(),
       args.at(0)->get<string>());
@@ -326,22 +326,22 @@ bool NotifierSmtp::sendResults(nlohmann::json *results) {
   tmpl["now"] = getNow();
 
   // Compile the email :
-	MailMessage message;
-	message.setSender(from);
-	message.addRecipient(MailRecipient(MailRecipient::PRIMARY_RECIPIENT, to));
+  MailMessage message;
+  message.setSender(from);
+  message.addRecipient(MailRecipient(MailRecipient::PRIMARY_RECIPIENT, to));
 
   inja = getInjaEnv(); 
 
-	message.setSubject(inja->render(template_subject, tmpl));
+  message.setSubject(inja->render(template_subject, tmpl));
 
-	message.setContentType("text/plain; charset=UTF-8");
-  message.setContent( renderFile(template_plain_path, &tmpl), MailMessage::ENCODING_8BIT);
+  message.setContentType("text/plain; charset=UTF-8");
+  message.setContent( renderPlain(template_plain_path, &tmpl), MailMessage::ENCODING_8BIT);
 
-	MediaType mediaType("multipart", "related");
-	mediaType.setParameter("type", "text/html");
-	message.setContentType(mediaType);
+  MediaType mediaType("multipart", "related");
+  mediaType.setParameter("type", "text/html");
+  message.setContentType(mediaType);
 
-	message.addPart("", new StringPartSource( renderFile(template_html_path, &tmpl),
+  message.addPart("", new StringPartSource( renderHtml(template_html_path, &tmpl),
     "text/html"), MailMessage::CONTENT_INLINE, MailMessage::ENCODING_QUOTED_PRINTABLE);
 
   for (auto& attachment : attachments) attachment.attachTo(&message);
@@ -349,9 +349,20 @@ bool NotifierSmtp::sendResults(nlohmann::json *results) {
   return deliverMessage(&message);
 }
 
-string NotifierSmtp::renderFile(const string file_path, const nlohmann::json *tmpl ) {
+string NotifierSmtp::renderHtml(const string file_path, const nlohmann::json *tmpl ) {
   current_template_path = file_path;
-  string ret = inja->render_file(file_path, *tmpl);
-  current_template_path = string();
-  return ret;
+
+  inja->set_trim_blocks(false);
+  inja->set_lstrip_blocks(false);
+
+  return inja->render_file(file_path, *tmpl);
+}
+
+string NotifierSmtp::renderPlain(const string file_path, const nlohmann::json *tmpl ) {
+  current_template_path = file_path;
+
+  inja->set_trim_blocks(true);
+  inja->set_lstrip_blocks(true);
+
+  return inja->render_file(file_path, *tmpl);
 }

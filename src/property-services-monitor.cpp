@@ -11,19 +11,19 @@ using namespace std;
 shared_ptr<MonitorServiceFactory::map_type> MonitorServiceFactory::map = nullptr;
 
 bool pathIsReadable(string path) {
-	filesystem::path p(path);
+  filesystem::path p(path);
 
-	error_code ec;
-	auto perms = filesystem::status(p, ec).permissions();
+  error_code ec;
+  auto perms = filesystem::status(p, ec).permissions();
 
-	return ( (ec.value() == 0) && (
+  return ( (ec.value() == 0) && (
     (perms & filesystem::perms::owner_read) != filesystem::perms::none &&
     (perms & filesystem::perms::group_read) != filesystem::perms::none &&
     (perms & filesystem::perms::others_read) != filesystem::perms::none ) );
 }
 
 int main(int argc, char* argv[]) {
-	vector<string> args(argv + 1, argv + argc);
+  vector<string> args(argv + 1, argv + argc);
   
   // Help wanted?  
   if ( (args.size() == 0 ) || INCLUDES_HELP(args) ) {
@@ -47,10 +47,10 @@ int main(int argc, char* argv[]) {
       "                          this host. See below for details.\n\n"
     );
 
-		auto services = MonitorServiceFactory::getRegistrations();
-	
-		string services_joined = accumulate( next(services.begin()), services.end(), 
-			services[0], [](string a, string b) { return fmt::format("\"{}\", \"{}\"",a,b);} );
+    auto services = MonitorServiceFactory::getRegistrations();
+  
+    string services_joined = accumulate( next(services.begin()), services.end(), 
+      services[0], [](string a, string b) { return fmt::format("\"{}\", \"{}\"",a,b);} );
 
     help.append(fmt::format(
       "The \"services\" (sequence) is expected to provide an itemization of the service being tested\n"
@@ -58,18 +58,18 @@ int main(int argc, char* argv[]) {
       "The format of service's (map) is as follows:\n"
       " * type           (required) The type of service being tested. The type must be one of the\n"
       "                             following supported types: {}.\n\n"
-			"                             Depending on the value of this parameter, additional sequence\n"
-			"                             options may be available. in this service's map section. What\n"
-			"                             follows are type-specific parameters.\n", 
-			services_joined ));
+      "                             Depending on the value of this parameter, additional sequence\n"
+      "                             options may be available. in this service's map section. What\n"
+      "                             follows are type-specific parameters.\n", 
+      services_joined ));
 
     for (string service : services)
-			help.append(fmt::format( "\n For \"{}\" service types:\n{}", 
-				service,MonitorServiceFactory::getHelp(service) ));
+      help.append(fmt::format( "\n For \"{}\" service types:\n{}", 
+        service,MonitorServiceFactory::getHelp(service) ));
 
     help.append(
-			"\nFor more information about this program, see the github repo at:\n"
-			"  https://github.com/brighton36/property-services-monitor/\n" );
+      "\nFor more information about this program, see the github repo at:\n"
+      "  https://github.com/brighton36/property-services-monitor/\n" );
 
     cout << help; 
 

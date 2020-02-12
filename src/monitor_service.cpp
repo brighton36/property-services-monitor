@@ -21,13 +21,13 @@ bool MonitorServiceBase::resultAdd(string key, string value) {
 
 void MonitorServiceBase::setParameters(map<string,function<void(string)>> assigns) {
   for( const auto& p : *params ) {
-  	auto it = assigns.find(p.first);
-		if (it != assigns.end()) 
+    auto it = assigns.find(p.first);
+    if (it != assigns.end()) 
       assigns[p.first](p.second);
     else
       throw invalid_argument(fmt::format("Unrecognized {} parameter \"{}\".", 
         type, p.first));
-	}
+  }
 
   return; 
 }

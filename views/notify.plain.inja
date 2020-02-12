@@ -1,1 +1,29 @@
-hai
+{{ subject }}
+{% if has_failures %}
+Network Status: Errors Encounted.
+{% else %}
+Network Status: Online/Functional.
+{% endif %}
+Generated: {{f("%02d",now.mon)}}/{{f("%02d",now.mday)}}/{{f("%04d",now.year)}} {{f("%02d",now.hour)}}:{{f("%02d",now.min)}} {{now.zone}}
+
+{% for host in hosts %}
+({{ upper(host.label) }})
+{%if host.description%}{{ host.description }}{% endif %}
+{% for service in host.services %}
+{% if service.is_up %}
+- {{ service.type }}: Online/Functional.
+  {% if service.type == "ping" %}
+  This indicates that the device is powered on, and visible to the network.
+  {% else if service.type == "web"  %}
+  This indicates that the device is accessible to web browsers.
+  {% else %}
+  (Unknown Service Type)
+  {% endif %}
+{% else %}
+- {{ service.type }}: Errors Encountered.
+  Error(s) were found while scanning "{{ host.address}}"
+  {{ service.results.failure_reason }}
+{% endif %}
+{% endfor %}
+
+{% endfor %}

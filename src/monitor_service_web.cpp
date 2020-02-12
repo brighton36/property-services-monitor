@@ -14,14 +14,14 @@ std::string MonitorServiceWeb::Help() {
   return fmt::format(
     " * proto          (optional) Either \"http\" or \"https\". Defaults to \"http\".\n"
     " * port           (optional) The port number of the http service. Defaults to 80 (http) or\n"
-		"                             443 (https), depending on the proto value.\n"
+    "                             443 (https), depending on the proto value.\n"
     " * path           (optional) The resource path being request from the http server. Defaults\n"
-		"                             to \"/\".\n"
+    "                             to \"/\".\n"
     " * status_equals  (optional) The expected HTTP status code, to be received from the server.\n"
-		"                             Defaults to {}.\n"
+    "                             Defaults to {}.\n"
     " * ensure_match   (optional) A regular expression to be found in the return content body.\n"
-		"                             This regex is expected to be in the C++ regex format (no /'s).\n", 
-		Poco::Net::HTTPResponse::HTTP_OK );
+    "                             This regex is expected to be in the C++ regex format (no /'s).\n", 
+    Poco::Net::HTTPResponse::HTTP_OK );
 }
 
 MonitorServiceWeb::MonitorServiceWeb(string address, PTR_MAP_STR_STR params) 
@@ -38,12 +38,12 @@ MonitorServiceWeb::MonitorServiceWeb(string address, PTR_MAP_STR_STR params)
     {"path",          [&](string v) { path = v;} },
     {"port",          [&](string v) { port = stoi(v);} },
     {"proto",         [&](string v) { 
-			if (v == "http")
-				isHttps = false;
+      if (v == "http")
+        isHttps = false;
       else if (v == "https")
-				isHttps = true;
-			else
-				throw invalid_argument(fmt::format("Unrecognized web proto \"{}\".", v));
+        isHttps = true;
+      else
+        throw invalid_argument(fmt::format("Unrecognized web proto \"{}\".", v));
     } }
   });
 
@@ -79,8 +79,8 @@ string MonitorServiceWeb::httxRequest(string path, Poco::Net::HTTPResponse &resp
 bool MonitorServiceWeb::isAvailable() {
   MonitorServiceBase::isAvailable();
 
-	try {
-		Poco::Net::HTTPResponse response;
+  try {
+    Poco::Net::HTTPResponse response;
 
     string response_content = httxRequest(path, response);
 
@@ -109,8 +109,8 @@ bool MonitorServiceWeb::isAvailable() {
     else
       return resultFail("Server status code {} did not match the expected {} status code.", 
           status_code, status_equals);
-	}
-	catch (const exception& e) { 
+  }
+  catch (const exception& e) { 
     return resultFail(e.what());
   }
 }
