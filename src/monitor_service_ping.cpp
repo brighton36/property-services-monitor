@@ -15,18 +15,13 @@ std::string MonitorServicePing::Help() {
 MonitorServicePing::MonitorServicePing(string address, PTR_MAP_STR_STR params) 
   : MonitorServiceBase("ping", address, params) { 
 
-  // Default values:
   tries = 5;
   success_over = 4;
-
-  for( const auto& n : *params )
-    if ("tries" == n.first)
-      tries = stoi(n.second);
-    else if ("success_over" == n.first)
-      success_over = stoi(n.second);
-    else
-      throw invalid_argument(fmt::format("Unrecognized ping parameter \"{}\".", 
-        n.first));
+  
+  setParameters({
+    {"tries",        [&](string v) { tries = stoi(v);}},
+    {"success_over", [&](string v) { success_over = stoi(v);} }
+  });
 }
 
 bool MonitorServicePing::isAvailable() {

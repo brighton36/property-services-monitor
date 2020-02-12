@@ -27,33 +27,25 @@ std::string MonitorServiceWeb::Help() {
 MonitorServiceWeb::MonitorServiceWeb(string address, PTR_MAP_STR_STR params) 
   : MonitorServiceBase("web", address, params) {
 
-  // Default values:
   isHttps = false;
   port = 0;
   path = "/";
   status_equals = Poco::Net::HTTPResponse::HTTP_OK;
 
-  for( const auto& n : *params )
-    if ("proto" == n.first) {
-			if (n.second == "http")
+  setParameters({
+    {"ensure_match",  [&](string v) { ensure_match = v;}},
+    {"status_equals", [&](string v) { status_equals = stoi(v);} },
+    {"path",          [&](string v) { path = v;} },
+    {"port",          [&](string v) { port = stoi(v);} },
+    {"proto",         [&](string v) { 
+			if (v == "http")
 				isHttps = false;
-      else if (n.second == "https")
+      else if (v == "https")
 				isHttps = true;
 			else
-				throw invalid_argument(fmt::format("Unrecognized web proto \"{}\".", 
-					n.second));
-    }
-    else if ("port" == n.first)
-      port = stoi(n.second);
-    else if ("path" == n.first)
-      path = n.second;
-    else if ("status_equals" == n.first)
-      status_equals = stoi(n.second);
-    else if ("ensure_match" == n.first)
-      ensure_match = n.second;
-    else
-      throw invalid_argument(fmt::format("Unrecognized ping parameter \"{}\".", 
-        n.first));
+				throw invalid_argument(fmt::format("Unrecognized web proto \"{}\".", v));
+    } }
+  });
 
   if (!port) port = (isHttps) ? 443 : 80;
 }

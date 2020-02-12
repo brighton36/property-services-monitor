@@ -281,8 +281,9 @@ unique_ptr<inja::Environment> NotifierSmtp::getInjaEnv() {
   });
 
 	env->add_callback("image_src", 1, [&](inja::Arguments& args) {
-    // TODO: This should be canonical template path
-    auto attachment = SmtpAttachment(base_path, args.at(0)->get<string>());
+    auto attachment = SmtpAttachment(
+      filesystem::path(current_template_path).parent_path(),
+      args.at(0)->get<string>());
     
     // If it's not already in the attachments vector, add it:
     if(find(attachments.begin(), attachments.end(), attachment) == attachments.end())
@@ -329,26 +330,28 @@ bool NotifierSmtp::sendResults(nlohmann::json *results) {
 	message.setSender(from);
 	message.addRecipient(MailRecipient(MailRecipient::PRIMARY_RECIPIENT, to));
 
-  auto inja = getInjaEnv();
+  inja = getInjaEnv(); 
 
 	message.setSubject(inja->render(template_subject, tmpl));
 
-  auto notification_in_html = inja->render_file(template_html_path, tmpl);
-  auto notification_in_plain = inja->render_file(template_plain_path, tmpl);
-
 	message.setContentType("text/plain; charset=UTF-8");
-	message.setContent(notification_in_plain, MailMessage::ENCODING_8BIT);
+  message.setContent( renderFile(template_plain_path, &tmpl), MailMessage::ENCODING_8BIT);
 
 	MediaType mediaType("multipart", "related");
 	mediaType.setParameter("type", "text/html");
 	message.setContentType(mediaType);
 
-	message.addPart("", new StringPartSource(notification_in_html, "text/html"), 
-    MailMessage::CONTENT_INLINE, MailMessage::ENCODING_QUOTED_PRINTABLE);
+	message.addPart("", new StringPartSource( renderFile(template_html_path, &tmpl),
+    "text/html"), MailMessage::CONTENT_INLINE, MailMessage::ENCODING_QUOTED_PRINTABLE);
 
   for (auto& attachment : attachments) attachment.attachTo(&message);
 
   return deliverMessage(&message);
 }
 
-
+string NotifierSmtp::renderFile(const string file_path, const nlohmann::json *tmpl ) {
+  current_template_path = file_path;
+  string ret = inja->render_file(file_path, *tmpl);
+  current_template_path = string();
+  return ret;
+}

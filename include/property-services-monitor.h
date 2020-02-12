@@ -38,6 +38,7 @@ class MonitorServiceBase {
 
     virtual bool isAvailable();
   protected:
+    void setParameters(std::map<std::string,std::function<void(std::string)>>);
     bool resultAdd(std::string, std::string);
     template<typename... Args> bool resultFail(std::string reason, Args... args) {
       resultAdd("failure_reason", fmt::format(reason, args...));
@@ -122,7 +123,7 @@ class MonitorServiceWeb : public MonitorServiceBase {
 
     MonitorServiceWeb(std::string, PTR_MAP_STR_STR);
     bool isAvailable();
-    std::string httxRequest(std::string path, Poco::Net::HTTPResponse &response);
+    std::string httxRequest(std::string path, Poco::Net::HTTPResponse &);
     static std::string Help();
   private:
     static ServiceRegister<MonitorServiceWeb> reg;
@@ -150,11 +151,11 @@ class SmtpAttachment {
     std::string full_path, contents_hash, file_mime_type;
     std::unique_ptr<Poco::Net::FilePartSource> file_part_source;
     SmtpAttachment(std::string, std::string);
-    SmtpAttachment(const SmtpAttachment &s2);
-    bool operator==(const SmtpAttachment &s2);
+    SmtpAttachment(const SmtpAttachment &);
+    bool operator==(const SmtpAttachment &);
     std::string getFilename();
     std::string getContentID();
-    void attachTo(Poco::Net::MailMessage *m);
+    void attachTo(Poco::Net::MailMessage *);
   private:
     void setFilepath(std::string);
 };
@@ -166,15 +167,18 @@ class NotifierSmtp {
     unsigned int port;
     bool isSSL;
     PTR_MAP_STR_STR parameters;
+    std::unique_ptr<inja::Environment> inja;
     std::vector<SmtpAttachment> attachments;
 
     NotifierSmtp(std::string, const YAML::Node);
     NotifierSmtp() {};
     bool sendResults(nlohmann::json*);
-    bool deliverMessage(Poco::Net::MailMessage *message);
+    bool deliverMessage(Poco::Net::MailMessage *);
+    std::string renderFile(const std::string, const nlohmann::json *);
     static std::string Help();
   private:
     nlohmann::json getNow();
+    std::string current_template_path;
     std::string toFullPath(std::string, std::string);
     std::unique_ptr<inja::Environment> getInjaEnv();
 };
