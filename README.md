@@ -15,19 +15,20 @@ Compilation is as simple as :
 make && make install
 ```
 Once compiled, the property-services-monitor is intended to be run via a scheduled
-cronjob. There is one expected parameter, a yaml file, with site configuration 
+cronjob. There is one expected parameter, a yaml file path, with site configuration 
 details. 
 
 ## Sample Config File
 Included in this repository is a sample, minimal config.yml for getting started.
 
 ## Notes on the e-mail output template format
-The email formatting templates are referenced in the config.yml. See the default
-templates for an example of how to write your own. Templates use the 
-[inja library](https://pantor.github.io/inja/) for constructing plain and 
+The email formatting templates can be specified in the config.yml. By default, 
+the templates are automatically set to notify.html.inja and notify.plain.inja 
+See these included templates for an example of how to write your own. Templates 
+use the [inja library](https://pantor.github.io/inja/) for constructing plain and 
 html output.
 
-Note that some template configuration can be adjusted without having to alter
+Note that some template adjustments can be performed without having to alter
 or create new templates. To quickly adjust the default template, add the 
 following parameters to your config.yml:
 ```
@@ -39,8 +40,14 @@ notification:
     #...
 ```
 To see what parameters are supported in the default template, search the included
-notify.html.inja and notify_body.html.inja. Note that these parameters also 
-submitted to the notify.plain.inja .
+notify.html.inja and notify_body.html.inja. 
+Note: 
+ - These parameters also submitted to the notify.plain.inja before rendering.
+ - There are no restrictions on what key and value pairs you delineate in this
+   'parameters' section. If you wish to add additional parameters for use in your
+   own templates, just add them to this section of the config, and they will be
+   mirrored onto the template at the time of rendering.
+ - Relative Image paths are expected to be relative to the inja file itself.
 
 ## Program help Output
 Additional help can be found in the --help output of the program. 
