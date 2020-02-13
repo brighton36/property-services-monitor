@@ -50,7 +50,8 @@ Note:
  - Relative Image paths are expected to be relative to the inja file itself.
 
 ## Program help Output
-Additional help can be found in the --help output of the program. 
+Additional details on the types of services that are supported, and what options
+they support testing, can be found in the --help output of the program. 
 ```
 Usage: ./property-services-monitor [config.yml]
 
