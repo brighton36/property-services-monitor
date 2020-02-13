@@ -1,6 +1,50 @@
 # property-services-monitor
-A lightweight service availability checking tool.
+This is a lightweight tool to test services and servers on a property, and e-mail
+an address with the results of those tests. 
 
+This tool is written in modern C++, and designed to be portable, for use on 
+raspberri pi's, or similar systems.
+
+## Compilation
+If compiling on Debian systems, the following library packages are required:
+```
+sudo apt install libfmt-dev libyaml-cpp-dev libpoco-dev
+```
+Compilation is as simple as :
+```
+make && make install
+```
+Once compiled, the property-services-monitor is intended to be run via a scheduled
+cronjob. There is one expected parameter, a yaml file, with site configuration 
+details. 
+
+## Sample Config File
+Included in this repository is a sample, minimal config.yml for getting started.
+
+## Notes on the e-mail output template format
+The email formatting templates are referenced in the config.yml. See the default
+templates for an example of how to write your own. Templates use the 
+[inja library](https://pantor.github.io/inja/) for constructing plain and 
+html output.
+
+Note that some template configuration can be adjusted without having to alter
+or create new templates. To quickly adjust the default template, add the 
+following parameters to your config.yml:
+```
+notification:
+  #...
+  parameters:
+    thumbnail: /home/user/images/property-exterior.jpg
+    body_color: #aaaaaa
+    #...
+```
+To see what parameters are supported in the default template, search the included
+notify.html.inja and notify_body.html.inja. Note that these parameters also 
+submitted to the notify.plain.inja .
+
+## Program help Output
+Additional help can be found in the --help output of the program. 
+```
 Usage: ./property-services-monitor [config.yml]
 
 The supplied argument is expected to be a yaml-formatted service monitor definition file.
@@ -68,3 +112,4 @@ The format of service's (map) is as follows:
 
 For more information about this program, see the github repo at:
   https://github.com/brighton36/property-services-monitor/
+```
