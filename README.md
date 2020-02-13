@@ -2,8 +2,14 @@
 This is a lightweight tool to test services and servers on a property, and e-mail
 an address with the results of those tests. 
 
+![Sample Report e-mail output](sample_report_screenshot.png)
+
 This tool is written in modern C++, and designed to be portable, for use on 
 raspberri pi's, or similar systems.
+
+**NOTE: Some (most) systems require this executable to run as suid root, in order
+to perform ping tests. If you're seeing an "I/O Error" in your reports, this is
+why you're receiving that error message.**
 
 ## Compilation
 If compiling on Debian systems, the following library packages are required:
@@ -19,7 +25,7 @@ cronjob. There is one expected parameter, a yaml file path, with site configurat
 details. 
 
 ## Sample Config File
-Included in this repository is a sample, minimal sample_config.yml for getting started.
+Included in this repository is a (sample, minimal sample_config.yml)[sample_config.yml] for getting started.
 
 ## Notes on the e-mail output template format
 The email formatting templates can be specified in the config.yml. By default, 
