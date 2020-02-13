@@ -19,7 +19,7 @@ cronjob. There is one expected parameter, a yaml file path, with site configurat
 details. 
 
 ## Sample Config File
-Included in this repository is a sample, minimal config.yml for getting started.
+Included in this repository is a sample, minimal sample_config.yml for getting started.
 
 ## Notes on the e-mail output template format
 The email formatting templates can be specified in the config.yml. By default, 
