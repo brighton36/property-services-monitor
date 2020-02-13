@@ -59,12 +59,14 @@ Note:
 Additional details on the types of services that are supported, and what options
 they support testing, can be found in the --help output of the program. 
 ```
-Usage: ./property-services-monitor [config.yml]
+Usage: ./property-services-monitor [-o] [FILE]
+A lightweight service availability checking tool.
 
-The supplied argument is expected to be a yaml-formatted service monitor definition file.
+-o           Output a terse summary of the notification contents to STDOUT.
+--help       Display this help and exit.
+
+The supplied FILE is expected to be a yaml-formatted service monitor definition file.
 (See https://en.wikipedia.org/wiki/YAML for details on the YAML file format.)
-
-The following sections and parameters are supported in your supplied config file.
 
 At the root of the config file, two parameters are required: "notification" and "hosts".
 

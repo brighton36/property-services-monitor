@@ -3,12 +3,19 @@
 #include "Poco/Net/NetException.h"
 #include "Poco/Net/MailRecipient.h"
 
-#define INCLUDES_HELP(v) (find_if((v).begin(), (v).end(), \
-  [] (string s) { return ((s == "-h") || (s == "--help")); } ) != (v).end())
-
 using namespace std;
 
 shared_ptr<MonitorServiceFactory::map_type> MonitorServiceFactory::map = nullptr;
+
+bool has_any(vector<string> haystack, vector<string> needles) {
+  return (find_if(haystack.begin(), haystack.end(), 
+    [&needles] (string s) { 
+      return (
+        find_if(needles.begin(), needles.end(), [&s] (string n) { return n == s; }
+      ) != needles.end());
+    } 
+  ) != haystack.end());
+}
 
 bool pathIsReadable(string path) {
   filesystem::path p(path);
@@ -24,13 +31,15 @@ bool pathIsReadable(string path) {
 
 int main(int argc, char* argv[]) {
   vector<string> args(argv + 1, argv + argc);
-  
+
   // Help wanted?  
-  if ( (args.size() == 0 ) || INCLUDES_HELP(args) ) {
-    string help = fmt::format("Usage: {} [config.yml]\n\n"
-      "The supplied argument is expected to be a yaml-formatted service monitor definition file.\n"
+  if ( (args.size() == 0 ) || has_any(args, {"-h", "--help"}) ) {
+    string help = fmt::format("Usage: {} [-o] [FILE]\n"
+      "A lightweight service availability checking tool.\n\n"
+      "-o           Output a terse summary of the notification contents to STDOUT.\n"
+      "--help       Display this help and exit.\n\n"
+      "The supplied FILE is expected to be a yaml-formatted service monitor definition file.\n"
       "(See https://en.wikipedia.org/wiki/YAML for details on the YAML file format.)\n\n"
-      "The following sections and parameters are supported in your supplied config file.\n\n"
       "At the root of the config file, two parameters are required: \"notification\""
       " and \"hosts\".\n\n", argv[0]);
 
@@ -76,15 +85,23 @@ int main(int argc, char* argv[]) {
     return 1;
   }
 
-  // Seems like we were given a configuration file to parse:
-  const auto config_path = args[0];
-
   MonitorJob job;
   NotifierSmtp notifier;
+  string config_path;
   string base_path;
 
-  // Load and Verify the config :
   try {
+    // Figure out what config file we were provided. We take the first parameter
+    // that doesn't start with a dash:
+    for(string a : args) if (a.at(0) != '-') { config_path = a; break; }
+
+    if (config_path.empty())
+      throw invalid_argument("Missing a configuration file. See help for details.");
+
+    if (!pathIsReadable(config_path))
+      throw invalid_argument(
+         "Unable to read the supplied configuration file. See help for details.");
+
     const auto config = YAML::LoadFile(config_path);
 
     base_path = filesystem::path(filesystem::canonical(config_path)).parent_path();
@@ -112,16 +129,19 @@ int main(int argc, char* argv[]) {
   // Build Output:
   auto tmpl_data = job.toJson();
 
-  // TODO: We should just dump the text template from the job(). Or, maybe have a text output option
-  fmt::print("To  : {} \nFrom: {}\n", notifier.to, notifier.from);
+  if (has_any(args, {"-o"})) {
+    // This is mostly for debugging I suppose. It's a bit underwhelming.
+    // Perhaps more should be done here.
+    fmt::print("To  : {} \nFrom: {}\n", notifier.to, notifier.from);
 
-  for (auto& host : tmpl_data["hosts"].items()) {
-    auto host_values = host.value();
-    fmt::print("  * Host: {} ({})\n", host_values["label"], host_values["address"]);
-    for (auto& service : host_values["services"].items()) {
-      auto service_values = service.value();
-      fmt::print("    * {} : {}\n", service_values["type"], 
-        (service_values["is_up"]) ? "OK" : "FAIL");
+    for (auto& host : tmpl_data["hosts"].items()) {
+      auto host_values = host.value();
+      fmt::print("  * Host: {} ({})\n", host_values["label"], host_values["address"]);
+      for (auto& service : host_values["services"].items()) {
+        auto service_values = service.value();
+        fmt::print("    * {} : {}\n", service_values["type"], 
+          (service_values["is_up"]) ? "OK" : "FAIL");
+      }
     }
   }
 

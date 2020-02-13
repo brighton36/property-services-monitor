@@ -27,6 +27,7 @@
 #define MISSING_FIELD "Missing \"{}\" field."
 
 bool pathIsReadable(std::string);
+bool has_any(std::vector<std::string>, std::vector<std::string>);
 
 class MonitorServiceBase { 
   public:
