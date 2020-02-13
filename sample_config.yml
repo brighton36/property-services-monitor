@@ -1,0 +1,30 @@
+notification:
+  to: "facilities-manager@gmail.com"
+  from: "it-department@gmail.com"
+  subject: "ACME Industries Warehouse Report"
+  host: smtp.gmail.com
+  proto: ssl
+  username: "it-department@gmail.com"
+  password: "smtp-password-here"
+hosts:
+  - label: Security Cameras
+    address: "192.168.1.5"
+    description: This DVR is located in the janitorial closet on the third floor.
+    services: [ ping, web ]
+  - label: Exterior Lawn Sprinkler System
+    address: "192.168.1.6"
+    description: The Sprinkler system controller on the North West corner of the property. Seems like the device's wireless connectivity is poor, but, it works well enough once programmed.
+    services: 
+      - type: ping
+        tries: 10
+        success_over: 1
+  - label: Lunchroom Wireless Access Point
+    address: "192.168.1.7"
+    description: The access point installed into the ceiling of the lunch room, above the coffee machine.
+    services: 
+      - type: ping
+      - type: web
+        proto: https
+        port: 81
+        ensure_match: '\<title\>Cisco 12345 WAP Login\<\/title\>'
+

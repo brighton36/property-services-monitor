@@ -3,7 +3,7 @@
 *.swm
 *.swn
 *.o
-*.yml
+config*.yml
 TODO.txt
 build/*
 
