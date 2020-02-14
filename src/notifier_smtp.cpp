@@ -334,15 +334,15 @@ bool NotifierSmtp::sendResults(nlohmann::json *results) {
 
   message.setSubject(inja->render(template_subject, tmpl));
 
-  message.setContentType("text/plain; charset=UTF-8");
-  message.setContent( renderPlain(template_plain_path, &tmpl), MailMessage::ENCODING_8BIT);
-
   MediaType mediaType("multipart", "related");
-  mediaType.setParameter("type", "text/html");
   message.setContentType(mediaType);
 
   message.addPart("", new StringPartSource( renderHtml(template_html_path, &tmpl),
     "text/html"), MailMessage::CONTENT_INLINE, MailMessage::ENCODING_QUOTED_PRINTABLE);
+
+  message.addPart("", new StringPartSource( renderPlain(template_plain_path, &tmpl),
+    "text/plain; charset=utf-8; format=fixed"), 
+    MailMessage::CONTENT_INLINE, MailMessage::ENCODING_QUOTED_PRINTABLE);
 
   for (auto& attachment : attachments) attachment.attachTo(&message);
 
