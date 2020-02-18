@@ -4,13 +4,20 @@ Source: https://github.com/brighton36/property-services-monitor
 #
 # Please double check copyright with the licensecheck(1) command.
 
-Files:     Makefile
+Files:     debian/README.Debian
+           debian/changelog
+           debian/compat
+           debian/control
+           debian/copyright
+           debian/patches/series
+           debian/rules
+           debian/source/format
+           debian/watch
+           Makefile
            README.md
-           TODO.txt
-           build_armhf.sh
-           build_dpkg.sh
            include/property-services-monitor.h
            sample_report_screenshot.png
+           property-services-monitor.man
            src/monitor_job.cpp
            src/monitor_service.cpp
            src/monitor_service_ping.cpp
@@ -19,15 +26,36 @@ Files:     Makefile
            src/property-services-monitor.cpp
            views/images/home.jpg
            views/notify.plain.inja
+           views/notify.html.inja
+           views/notify_body.html.inja
 Copyright: Copyright © 2020 Chris DeRose
 License:   GPL
+  property-services-monitor - A lightweight service availability checking tool.
+  Copyright (C) 2020 Chris DeRose
+  .
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  .
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  .
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+  .
+  On Debian systems, the full text of the GNU General Public
+  License version 2 can be found in the file
+  `/usr/share/common-licenses/GPL'.
 
-Files:     include/nlohmann/json.hpp
-Copyright: Copyright © 2013-2019 Niels Lohmann
-License:   MIT
+Files:     include/nlohmann/json.hpp include/inja.hpp
+Copyright: Copyright © 2013-2019 Niels Lohmann and 2018 lbersch
+License:   Expat
  Licensed under the MIT License <http://opensource.org/licenses/MIT>.
  SPDX-License-Identifier: MIT
- Copyright (c) 2013-2019 Niels Lohmann <http://nlohmann.me>.
+ Copyright (c) 2013-2019 Niels Lohmann <http://nlohmann.me> and lbersch
  .
  Permission is hereby  granted, free of charge, to any  person obtaining a copy
  of this software and associated  documentation files (the "Software"), to deal
@@ -46,15 +74,6 @@ License:   MIT
  LIABILITY, WHETHER IN AN ACTION OF  CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
  SOFTWARE.
-
-Files:     include/inja.hpp
-Copyright: 2019 Pantor.
-License:   MIT
-
-#----------------------------------------------------------------------------
-# xml and html files (skipped):
-#         views/notify_body.html.inja
-#         views/notify.html.inja
 
 #----------------------------------------------------------------------------
 # Files marked as NO_LICENSE_TEXT_FOUND may be covered by the following

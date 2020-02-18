@@ -59,6 +59,8 @@ distclean: clean
 install:
 	install -D build/bin/property-services-monitor \
 		$(DESTDIR)$(prefix)/bin/property-services-monitor
+	install -m 644 -D build/bin/property-services-monitor.1.gz \
+		$(DESTDIR)$(prefix)/share/man/man1/property-services-monitor.1.gz
 	install -m 644 -D build/bin/views/notify.plain.inja \
 		$(DESTDIR)$(prefix)/share/property-services-monitor/views/notify.plain.inja
 	install -m 644 -D build/bin/views/notify.html.inja \
@@ -76,17 +78,12 @@ uninstall:
 .PHONY: package
 package:
 	mkdir -p build/dpkg
-	tar --exclude-vcs --exclude='*.yml' --exclude='*.swp' --exclude='*.txt' --exclude "build" --exclude '*.txt' --transform "s,^.,property-services-monitor," -czvf build/dpkg/propertyservicesmonitor-0.1.tar.gz ./
-	cd build/dpkg
-	debmake -a propertyservicesmonitor-0.1.tar.gz
-	cd propertyservicesmonitor-0.1
-	# TODO: Edit debian/control 
-	# * Perhaps some of the meta fields: description, Vcs-Git, Vcs-browser, Homepage
-	dpkg-buildpackage -us -uc
-
-	#cd ..
-	# TODO this should work too now
-	#sbuild  --host=armhf -d buster propsmon-0.1
+	tar --exclude-vcs --exclude="*.yml" --exclude="*.swp" --exclude "*.txt" \
+		--exclude "build" --transform "s,^.,property-services-monitor," \
+		-czvf build/dpkg/propertyservicesmonitor-0.1.tar.gz ./
+	cd build/dpkg; debmake -a propertyservicesmonitor-0.1.tar.gz
+	cd build/dpkg/propertyservicesmonitor-0.1; dpkg-buildpackage -us -uc
+	cd build/dpkg; sbuild --host=armhf -d buster propertyservicesmonitor-0.1
 
 # checks the executable and symlinks to the output
 .PHONY: all
@@ -94,6 +91,7 @@ all: $(BIN_PATH)/$(BIN_NAME)
 	@echo "Making symlink: $(BIN_NAME) -> $<"
 	@$(RM) $(BIN_NAME)
 	@if [ ! -d "$(BIN_PATH)/views" ]; then ln -s $(VIEWS_PATH) $(BIN_PATH)/views; fi
+	@gzip -k property-services-monitor.man -c > $(BIN_PATH)/property-services-monitor.1.gz
 	@ln -s $(BIN_PATH)/$(BIN_NAME) $(BIN_NAME)
 
 # Creation of the executable
