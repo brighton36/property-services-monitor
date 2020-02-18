@@ -15,9 +15,9 @@ Files:     debian/README.Debian
            debian/watch
            Makefile
            README.md
+           property-services-monitor.1.man
            include/property-services-monitor.h
            sample_report_screenshot.png
-           property-services-monitor.man
            src/monitor_job.cpp
            src/monitor_service.cpp
            src/monitor_service_ping.cpp

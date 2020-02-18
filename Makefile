@@ -91,8 +91,14 @@ all: $(BIN_PATH)/$(BIN_NAME)
 	@echo "Making symlink: $(BIN_NAME) -> $<"
 	@$(RM) $(BIN_NAME)
 	@if [ ! -d "$(BIN_PATH)/views" ]; then ln -s $(VIEWS_PATH) $(BIN_PATH)/views; fi
-	@gzip -k property-services-monitor.man -c > $(BIN_PATH)/property-services-monitor.1.gz
+	@gzip -k property-services-monitor.1.man -c > $(BIN_PATH)/property-services-monitor.1.gz
 	@ln -s $(BIN_PATH)/$(BIN_NAME) $(BIN_NAME)
+
+.PHONY: manpage
+manpage: release
+	help2man -n "A lightweight service availability checking tool." \
+		--version-string=0.1 build/bin/property-services-monitor \
+		> property-services-monitor.1.man
 
 # Creation of the executable
 $(BIN_PATH)/$(BIN_NAME): $(OBJECTS)
