@@ -1,25 +1,22 @@
 ARCH ?= amd64
 
+# TODO
 ifeq ($(ARCH),armhf)
 CXX = arm-linux-gnueabihf-g++
+# TODO: Move this into the debian CPPFLAGS:
 COMPILE_FLAGS_ARCH = -Wno-psabi
-LINKER_FLAGS_ARCH =	-L build/armhf/cross-openssl/compiled-openssl/lib \
-  -L build/armhf/cross-poco/compiled-poco/lib \
-	-L build/armhf/cross-yamlcpp/compiled-yamlcpp/lib \
-	-L build/armhf/cross-fmt/compiled-fmt/lib
-INCLUDES_ARCH = -I./build/armhf/cross-openssl/compiled-openssl/include \
- -I./build/armhf/cross-poco/compiled-poco/include \
- -I./build/armhf/cross-yamlcpp/compiled-yamlcpp/include \
- -I./build/armhf/cross-fmt/compiled-fmt/include 
 else ifeq ($(ARCH),amd64)
 CXX = g++
 else
 # Probably we should support ia32, but I don't need that platform atm.
 $(error error is "Unknown or unsupported ARCH $(ARCH)")
 endif
+# /TODO
+
+prefix = /usr/
 
 SRC_PATH = ./src
-BUILD_PATH = build/$(ARCH)
+BUILD_PATH = build
 BIN_PATH = $(BUILD_PATH)/bin
 VIEWS_PATH = $(realpath ./views)
 BIN_NAME = property-services-monitor
@@ -31,8 +28,8 @@ DEPS = $(OBJECTS:.o=.d)
 
 # flags #
 COMPILE_FLAGS = -std=c++17 -Wall -Wextra $(COMPILE_FLAGS_ARCH) # -g
-INCLUDES = -I./include/ $(INCLUDES_ARCH)
-LIBS = -lfmt -lyaml-cpp -lPocoNet -lPocoNetSSL -lPocoFoundation -lPocoCrypto
+INCLUDES = -I./include/ 
+LIBS = -lfmt -lyaml-cpp -lPocoNet -lPocoNetSSL -lPocoFoundation -lPocoCrypto -lstdc++fs
 
 .PHONY: default_target
 default_target: release
@@ -50,12 +47,46 @@ dirs:
 
 .PHONY: clean
 clean:
-	# TODO: We should probably delete the whole build, not just the build/$(ARCH)..
 	@echo "Deleting $(BIN_NAME) symlink"
 	@$(RM) $(BIN_NAME)
 	@echo "Deleting directories"
 	@$(RM) -r $(BUILD_PATH)
 	@$(RM) -r $(BIN_PATH)
+
+distclean: clean
+
+.PHONY: install
+install:
+	install -D build/bin/property-services-monitor \
+		$(DESTDIR)$(prefix)/bin/property-services-monitor
+	install -m 644 -D build/bin/views/notify.plain.inja \
+		$(DESTDIR)$(prefix)/share/property-services-monitor/views/notify.plain.inja
+	install -m 644 -D build/bin/views/notify.html.inja \
+		$(DESTDIR)$(prefix)/share/property-services-monitor/views/notify.html.inja
+	install -m 644 -D build/bin/views/notify.html.inja \
+		$(DESTDIR)$(prefix)/share/property-services-monitor/views/notify_body.html.inja
+	install -m 644 -D build/bin/views/images/home.jpg \
+		$(DESTDIR)$(prefix)/share/property-services-monitor/views/images/home.jpg
+
+.PHONY: uninstall
+uninstall:
+	-rm -f $(DESTDIR)$(prefix)/bin/property-services-monitor
+	-rm -rf $(DESTDIR)$(prefix)/share/property-services-monitor
+
+.PHONY: package
+package:
+	mkdir -p build/dpkg
+	tar --exclude-vcs --exclude='*.yml' --exclude='*.swp' --exclude='*.txt' --exclude "build" --exclude '*.txt' --transform "s,^.,property-services-monitor," -czvf build/dpkg/propertyservicesmonitor-0.1.tar.gz ./
+	cd build/dpkg
+	debmake -a propertyservicesmonitor-0.1.tar.gz
+	cd propertyservicesmonitor-0.1
+	# TODO: Edit debian/control 
+	# * Perhaps some of the meta fields: description, Vcs-Git, Vcs-browser, Homepage
+	dpkg-buildpackage -us -uc
+
+	#cd ..
+	# TODO this should work too now
+	#sbuild  --host=armhf -d buster propsmon-0.1
 
 # checks the executable and symlinks to the output
 .PHONY: all
@@ -63,13 +94,12 @@ all: $(BIN_PATH)/$(BIN_NAME)
 	@echo "Making symlink: $(BIN_NAME) -> $<"
 	@$(RM) $(BIN_NAME)
 	@if [ ! -d "$(BIN_PATH)/views" ]; then ln -s $(VIEWS_PATH) $(BIN_PATH)/views; fi
-	#TODO: don't do this on a cross compile:
 	@ln -s $(BIN_PATH)/$(BIN_NAME) $(BIN_NAME)
 
 # Creation of the executable
 $(BIN_PATH)/$(BIN_NAME): $(OBJECTS)
 	@echo "Linking: $@"
-	$(CXX) $(LINKER_FLAGS_ARCH) $(OBJECTS) $(LIBS) -o $@
+	$(CXX) $(LDFLAGS) $(OBJECTS) $(LIBS) -o $@
 
 # Add dependency files, if they exist
 -include $(DEPS)
@@ -79,4 +109,4 @@ $(BIN_PATH)/$(BIN_NAME): $(OBJECTS)
 # dependency files to provide header dependencies
 $(BUILD_PATH)/%.o: $(SRC_PATH)/%.$(SRC_EXT)
 	@echo "Compiling: $< -> $@"
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -MP -MMD -c $< -o $@
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(INCLUDES) -MP -MMD -c $< -o $@
