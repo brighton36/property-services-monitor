@@ -53,7 +53,7 @@ install:
 		$(DESTDIR)$(prefix)/share/property-services-monitor/views/notify.plain.inja
 	install -m 644 -D build/bin/views/notify.html.inja \
 		$(DESTDIR)$(prefix)/share/property-services-monitor/views/notify.html.inja
-	install -m 644 -D build/bin/views/notify.html.inja \
+	install -m 644 -D build/bin/views/notify_body.html.inja \
 		$(DESTDIR)$(prefix)/share/property-services-monitor/views/notify_body.html.inja
 	install -m 644 -D build/bin/views/images/home.jpg \
 		$(DESTDIR)$(prefix)/share/property-services-monitor/views/images/home.jpg
