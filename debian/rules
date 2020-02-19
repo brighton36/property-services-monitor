@@ -5,6 +5,10 @@
 #export DEB_CFLAGS_MAINT_APPEND  = -Wall -pedantic
 #export DEB_LDFLAGS_MAINT_APPEND = -Wl,--as-needed
 
+ifeq ($(DEB_TARGET_ARCH),armhf)
+	export DEB_CXXFLAGS_MAINT_APPEND = -Wno-psabi
+endif
+
 %:
 	dh $@  
 

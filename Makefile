@@ -1,20 +1,8 @@
-ARCH ?= amd64
-
-# TODO
-ifeq ($(ARCH),armhf)
-CXX = arm-linux-gnueabihf-g++
-# TODO: Move this into the debian CPPFLAGS:
-COMPILE_FLAGS_ARCH = -Wno-psabi
-else ifeq ($(ARCH),amd64)
-CXX = g++
-else
-# Probably we should support ia32, but I don't need that platform atm.
-$(error error is "Unknown or unsupported ARCH $(ARCH)")
-endif
-# /TODO
+CXX ?= g++
 
 prefix = /usr/
 
+VERSION = 0.1
 SRC_PATH = ./src
 BUILD_PATH = build
 BIN_PATH = $(BUILD_PATH)/bin
@@ -27,7 +15,7 @@ OBJECTS = $(SOURCES:$(SRC_PATH)/%.$(SRC_EXT)=$(BUILD_PATH)/%.o)
 DEPS = $(OBJECTS:.o=.d)
 
 # flags #
-COMPILE_FLAGS = -std=c++17 -Wall -Wextra $(COMPILE_FLAGS_ARCH) # -g
+COMPILE_FLAGS = -std=c++17 -Wall -Wextra # -g
 INCLUDES = -I./include/ 
 LIBS = -lfmt -lyaml-cpp -lPocoNet -lPocoNetSSL -lPocoFoundation -lPocoCrypto -lstdc++fs
 
@@ -80,10 +68,10 @@ package:
 	mkdir -p build/dpkg
 	tar --exclude-vcs --exclude="*.yml" --exclude="*.swp" --exclude "*.txt" \
 		--exclude "build" --transform "s,^.,property-services-monitor," \
-		-czvf build/dpkg/propertyservicesmonitor-0.1.tar.gz ./
-	cd build/dpkg; debmake -a propertyservicesmonitor-0.1.tar.gz
-	cd build/dpkg/propertyservicesmonitor-0.1; dpkg-buildpackage -us -uc
-	cd build/dpkg; sbuild --host=armhf -d buster propertyservicesmonitor-0.1
+		-czvf build/dpkg/propertyservicesmonitor-$(VERSION).tar.gz ./
+	cd build/dpkg; debmake -a propertyservicesmonitor-$(VERSION).tar.gz
+	cd build/dpkg/propertyservicesmonitor-$(VERSION); dpkg-buildpackage -us -uc
+	cd build/dpkg; sbuild --host=armhf -d buster propertyservicesmonitor-$(VERSION)
 
 # checks the executable and symlinks to the output
 .PHONY: all
@@ -97,7 +85,7 @@ all: $(BIN_PATH)/$(BIN_NAME)
 .PHONY: manpage
 manpage: release
 	help2man -n "A lightweight service availability checking tool." \
-		--version-string=0.1 build/bin/property-services-monitor \
+		--version-string=$(VERSION) build/bin/property-services-monitor \
 		> property-services-monitor.1.man
 
 # Creation of the executable
