@@ -1,6 +1,6 @@
 CXX ?= g++
 
-prefix = /usr/
+prefix ?= /usr/
 
 VERSION = 0.1
 SRC_PATH = ./src
@@ -15,7 +15,7 @@ OBJECTS = $(SOURCES:$(SRC_PATH)/%.$(SRC_EXT)=$(BUILD_PATH)/%.o)
 DEPS = $(OBJECTS:.o=.d)
 
 # flags #
-COMPILE_FLAGS = -std=c++17 -Wall -Wextra # -g
+COMPILE_FLAGS = -std=c++17 -Wall -Wextra -DPREFIX=\"$(prefix)\" # -g 
 INCLUDES = -I./include/ 
 LIBS = -lfmt -lyaml-cpp -lPocoNet -lPocoNetSSL -lPocoFoundation -lPocoCrypto -lstdc++fs
 

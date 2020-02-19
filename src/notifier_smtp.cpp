@@ -139,11 +139,11 @@ NotifierSmtp::NotifierSmtp(string tpath, const YAML::Node config) {
 
   template_html_path = (config["template_html"]) ? 
     toFullPath(base_path, config["template_html"].as<string>()) :
-    toFullPath(executable_path, "views/notify.html.inja");
+    toFullPath(PREFIX, "share/property-services-monitor/views/notify.html.inja");
 
   template_plain_path = (config["template_plain"]) ? 
     toFullPath(base_path, config["template_plain"].as<string>()) :
-    toFullPath(executable_path, "views/notify.plain.inja");
+    toFullPath(PREFIX, "share/property-services-monitor/views/notify.plain.inja");
 
   template_subject = (config["template_subject"]) ? 
     config["template_subject"].as<string>() : DEFAULT_TEMPLATE_SUBJECT;
