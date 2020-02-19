@@ -134,9 +134,6 @@ NotifierSmtp::NotifierSmtp(string tpath, const YAML::Node config) {
   from = config["from"].as<string>();
   subject = config["subject"].as<string>();
 
-  string executable_path = filesystem::path(
-    filesystem::read_symlink("/proc/self/exe")).parent_path();
-
   template_html_path = (config["template_html"]) ? 
     toFullPath(base_path, config["template_html"].as<string>()) :
     toFullPath(PREFIX, "share/property-services-monitor/views/notify.html.inja");
