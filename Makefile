@@ -71,7 +71,7 @@ package:
 		-czvf build/dpkg/propertyservicesmonitor-$(VERSION).tar.gz ./
 	cd build/dpkg; debmake -a propertyservicesmonitor-$(VERSION).tar.gz
 	cd build/dpkg/propertyservicesmonitor-$(VERSION); dpkg-buildpackage -us -uc
-	cd build/dpkg; sbuild --host=armhf -d buster propertyservicesmonitor-$(VERSION)
+	cd build/dpkg; sbuild --host=armhf -d buster propertyservicesmonitor-$(VERSION) 
 
 # checks the executable and symlinks to the output
 .PHONY: all
