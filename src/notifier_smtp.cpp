@@ -136,11 +136,11 @@ NotifierSmtp::NotifierSmtp(string tpath, const YAML::Node config) {
 
   template_html_path = (config["template_html"]) ? 
     toFullPath(base_path, config["template_html"].as<string>()) :
-    toFullPath(PREFIX, "share/property-services-monitor/views/notify.html.inja");
+    toFullPath(getDefaultTemplatePath(), "notify.html.inja");
 
   template_plain_path = (config["template_plain"]) ? 
     toFullPath(base_path, config["template_plain"].as<string>()) :
-    toFullPath(PREFIX, "share/property-services-monitor/views/notify.plain.inja");
+    toFullPath(getDefaultTemplatePath(), "notify.plain.inja");
 
   template_subject = (config["template_subject"]) ? 
     config["template_subject"].as<string>() : DEFAULT_TEMPLATE_SUBJECT;
@@ -178,6 +178,19 @@ NotifierSmtp::NotifierSmtp(string tpath, const YAML::Node config) {
       
       parameters->insert(make_pair(param, value));
     }
+}
+
+// This mostly helps during the development. If there's a views directory in
+// the same directory as the executable, we return that. Otherwise, we return 
+// prefix.
+string NotifierSmtp::getDefaultTemplatePath() {
+  
+  string executable_path = string(filesystem::path(
+    filesystem::read_symlink("/proc/self/exe")).parent_path())+"/views";
+
+  string prefix_path = regex_replace(PREFIX, regex("\\/$"), "")+"/share/property-services-monitor/views";
+
+  return (pathIsReadable(executable_path)) ? executable_path : prefix_path;
 }
 
 // If file isn't a full path, we make it one, using the provided base

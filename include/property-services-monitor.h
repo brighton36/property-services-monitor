@@ -179,6 +179,7 @@ class NotifierSmtp {
   private:
     nlohmann::json getNow();
     std::string current_template_path;
+    std::string getDefaultTemplatePath();
     std::string toFullPath(std::string, std::string);
     std::unique_ptr<inja::Environment> getInjaEnv();
     std::string renderHtml(const std::string, const nlohmann::json *);

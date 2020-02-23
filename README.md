@@ -11,18 +11,34 @@ raspberri pi's, or similar systems.
 to perform ping tests. If you're seeing an "I/O Error" in your reports, this is
 why you're receiving that error message.**
 
-## Compilation
-If compiling on Debian systems, the following library packages are required:
+## Installation
+The supplied 0.1 release contains compiled deb packages for amd64 and arm6+ 
+platforms. 
+
+To install on DietPi (presumably Raspbian as well) distributions, be sure to install
+the dependencies: 
 ```
-sudo apt install libfmt-dev libyaml-cpp-dev libpoco-dev
+  apt install -f libpococrypto60 libpocofoundation60 libpoconet60 libpoconetssl60 libyaml-cpp0.6 libexpat1 libpocojson60 libpocoutil60 libpocoxml60
+```
+before installing the supplied package:
+```
+  dpkg -i propertyservicesmonitor_0.1-1_armhf.deb
+```
+Once installed, the property-services-monitor is intended to be run via a scheduled
+cronjob. There is one expected parameter, a yaml file path, with site configuration 
+details. 
+
+## Compilation
+If compiling on Debian systems, the following packages are required:
+```
+sudo apt install build-essential libfmt-dev libyaml-cpp-dev libpoco-dev
 ```
 Compilation is as simple as :
 ```
 make && make install
 ```
-Once compiled, the property-services-monitor is intended to be run via a scheduled
-cronjob. There is one expected parameter, a yaml file path, with site configuration 
-details. 
+If you wish to create debian packages for additional architectures or further 
+deployment, a "make package" target is included.
 
 ## Sample Config File
 Included in this repository is a (sample, minimal sample_config.yml)[sample_config.yml] for getting started.

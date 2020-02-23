@@ -14,6 +14,12 @@ SOURCES = $(shell find $(SRC_PATH) -name '*.$(SRC_EXT)' | sort -k 1nr | cut -f2-
 OBJECTS = $(SOURCES:$(SRC_PATH)/%.$(SRC_EXT)=$(BUILD_PATH)/%.o)
 DEPS = $(OBJECTS:.o=.d)
 
+TARGET_ARCH ?= $(shell uname -m)
+ifeq (arm,$(findstring arm,$(TARGET_ARCH)))
+	CXXFLAGS := -Wno-psabi
+endif                                      
+
+
 # flags #
 COMPILE_FLAGS = -std=c++17 -Wall -Wextra -DPREFIX=\"$(prefix)\" # -g 
 INCLUDES = -I./include/ 
@@ -71,7 +77,6 @@ package:
 		-czvf build/dpkg/propertyservicesmonitor-$(VERSION).tar.gz ./
 	cd build/dpkg; debmake -a propertyservicesmonitor-$(VERSION).tar.gz
 	cd build/dpkg/propertyservicesmonitor-$(VERSION); dpkg-buildpackage -us -uc
-	cd build/dpkg; sbuild --host=armhf -d buster propertyservicesmonitor-$(VERSION) 
 
 # checks the executable and symlinks to the output
 .PHONY: all
