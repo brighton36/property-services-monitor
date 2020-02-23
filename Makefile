@@ -16,7 +16,7 @@ DEPS = $(OBJECTS:.o=.d)
 
 TARGET_ARCH ?= $(shell uname -m)
 ifeq (arm,$(findstring arm,$(TARGET_ARCH)))
-	CXXFLAGS := -Wno-psabi
+	CXXFLAGS := $(CXXFLAGS) -Wno-psabi
 endif                                      
 
 
