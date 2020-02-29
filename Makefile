@@ -74,6 +74,7 @@ package:
 	mkdir -p build/dpkg
 	tar --exclude-vcs --exclude="*.yml" --exclude="*.swp" --exclude "*.txt" \
 		--exclude "build" --transform "s,^.,property-services-monitor," \
+		--exclude configs \
 		-czvf build/dpkg/propertyservicesmonitor-$(VERSION).tar.gz ./
 	cd build/dpkg; debmake -a propertyservicesmonitor-$(VERSION).tar.gz
 	cd build/dpkg/propertyservicesmonitor-$(VERSION); dpkg-buildpackage -us -uc

@@ -1,4 +1,5 @@
 #include "property-services-monitor.h"
+#include "notifier_smtp.h"
 
 #include "Poco/Net/NetException.h"
 #include "Poco/Net/MailRecipient.h"

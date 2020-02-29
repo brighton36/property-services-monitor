@@ -26,26 +26,10 @@
 #define PTR_MAP_STR_STR std::shared_ptr<std::map<std::string, std::string>>
 #define MISSING_FIELD "Missing \"{}\" field."
 
+#include "monitor_service.h"
+
 bool pathIsReadable(std::string);
 bool has_any(std::vector<std::string>, std::vector<std::string>);
-
-class MonitorServiceBase { 
-  public:
-    std::string address, type;
-    PTR_MAP_STR_STR params;
-    PTR_MAP_STR_STR results;
-
-    MonitorServiceBase(std::string, std::string, PTR_MAP_STR_STR);
-
-    virtual bool isAvailable();
-  protected:
-    void setParameters(std::map<std::string,std::function<void(std::string)>>);
-    bool resultAdd(std::string, std::string);
-    template<typename... Args> bool resultFail(std::string reason, Args... args) {
-      resultAdd("failure_reason", fmt::format(reason, args...));
-      return false;
-    }
-};
 
 template<typename T> std::shared_ptr<MonitorServiceBase> \
   createT(std::string address, PTR_MAP_STR_STR params) {
@@ -103,87 +87,6 @@ struct ServiceRegister : MonitorServiceFactory {
 
     getMap()->insert(std::make_pair(s, me));
   }
-};
-
-class MonitorServicePing : public MonitorServiceBase { 
-  public:
-    unsigned int tries, success_over;
-    MonitorServicePing(std::string, PTR_MAP_STR_STR);
-    bool isAvailable();
-    static std::string Help();
-  private:
-    static ServiceRegister<MonitorServicePing> reg;
-}; 
-
-class MonitorServiceWeb : public MonitorServiceBase { 
-  public:
-    unsigned int port, status_equals;
-    std::string path;
-    std::string ensure_match;
-    bool isHttps;
-
-    MonitorServiceWeb(std::string, PTR_MAP_STR_STR);
-    bool isAvailable();
-    std::string httxRequest(std::string path, Poco::Net::HTTPResponse &);
-    static std::string Help();
-  private:
-    static ServiceRegister<MonitorServiceWeb> reg;
-}; 
-
-
-class MonitorHost { 
-  public:
-    std::string label, description, address;
-    std::vector<std::shared_ptr<MonitorServiceBase>> services;
-    MonitorHost(std::string, std::string, std::string,
-      std::vector<std::shared_ptr<MonitorServiceBase>>);
-};
-
-class MonitorJob { 
-  public: 
-    std::vector<std::shared_ptr<MonitorHost>> hosts;
-    MonitorJob(const YAML::Node);  
-    MonitorJob(){};  
-    nlohmann::json toJson();  
-}; 
-
-class SmtpAttachment {
-  public:
-    std::string full_path, contents_hash, file_mime_type;
-    std::unique_ptr<Poco::Net::FilePartSource> file_part_source;
-    SmtpAttachment(std::string, std::string);
-    SmtpAttachment(const SmtpAttachment &);
-    bool operator==(const SmtpAttachment &);
-    std::string getFilename();
-    std::string getContentID();
-    void attachTo(Poco::Net::MailMessage *);
-  private:
-    void setFilepath(std::string);
-};
-
-class NotifierSmtp { 
-  public:
-    std::string to, from, subject, host, username, password, base_path;
-    std::string template_subject, template_html_path, template_plain_path;
-    unsigned int port;
-    bool isSSL;
-    PTR_MAP_STR_STR parameters;
-    std::unique_ptr<inja::Environment> inja;
-    std::vector<SmtpAttachment> attachments;
-
-    NotifierSmtp(std::string, const YAML::Node);
-    NotifierSmtp() {};
-    bool sendResults(nlohmann::json*);
-    bool deliverMessage(Poco::Net::MailMessage *);
-    static std::string Help();
-  private:
-    nlohmann::json getNow();
-    std::string current_template_path;
-    std::string getDefaultTemplatePath();
-    std::string toFullPath(std::string, std::string);
-    std::unique_ptr<inja::Environment> getInjaEnv();
-    std::string renderHtml(const std::string, const nlohmann::json *);
-    std::string renderPlain(const std::string, const nlohmann::json *);
 };
 
 #endif

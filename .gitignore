@@ -6,5 +6,6 @@
 config*.yml
 TODO.txt
 build/*
+configs/*
 
 property-services-monitor
