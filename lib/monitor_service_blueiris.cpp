@@ -1,5 +1,8 @@
 #include "monitor_service_blueiris.h"
 
+#include <ctime>
+#include <chrono>
+
 #include "Poco/MD5Engine.h"
 #include "Poco/DigestStream.h"
 
@@ -16,6 +19,7 @@ WebClient::WebClient(string address, int port, bool isSSL) {
 // TODO: I think we want to return a response and a string pair
 string WebClient::get(string path) {
   // Integrate this in the monitor_service_web as well as below
+  cout << path << endl;
   return "TODO";
 }
 
@@ -44,6 +48,8 @@ string WebClient::post(string path, string body) {
 	return ss.str();
 }
 
+
+//////////////////////////////////
 ServiceRegister<MonitorServiceBlueIris> MonitorServiceBlueIris::reg("blueiris");
 
 std::string MonitorServiceBlueIris::Help() { 
@@ -83,6 +89,7 @@ json MonitorServiceBlueIris::sendCommand(string command, json options = json()) 
     // Let's login/create a session
     string first_response;
     response = client->post("/json", json( {{"cmd", "login"}} ).dump());
+
     // TODO: Check for 200 code
     auto first_json = json::parse(response);
 
@@ -109,14 +116,16 @@ json MonitorServiceBlueIris::sendCommand(string command, json options = json()) 
   response = client->post("/json", options.dump());
 
   // TODO: Check for 200 code
+  // TODO: Check for response["result"] equalling "success"
+  // TODO: Check for response["session"] equalling what we have
   return json::parse(response);
 }
-
 
 bool MonitorServiceBlueIris::isAvailable() {
   MonitorServiceBase::isAvailable();
 
   // TODO : try/Catch errors
+  /*
   json response; 
 
   response = sendCommand("status");
@@ -126,10 +135,28 @@ bool MonitorServiceBlueIris::isAvailable() {
   response = sendCommand("log");
 
 	cout << "Log:" << response.dump() << endl;
+  */
 
-  // TODO: let's make use of startdate via a param
-  response = sendCommand("alertlist", {{"camera", "Index"}});
+  // TODO: let's make use of startdate and index via a param
+  json alerts = sendCommand("alertlist", {{"camera", "Index"}});
 
-	cout << "alert list:" << response.dump() << endl;
+	cout << "Alerts:" << endl;
+  // TODO: What to do about the zone... and let's maybe put this into a getAlerts() function
+	for (auto& [i, alert] : alerts["data"].items()) {
+    // TODO: auto bi_alert = BlueIrisAlert(alert);
+
+		time_t date = static_cast<time_t>(alert["date"]);
+		char date_string[80];
+
+		strftime(date_string,80,"%Y-%m-%d %H:%M",localtime(&date));
+
+		cout << i << " : " << alert["camera"] << " : " << string(date_string) << endl;
+	}
+
+	//cout << "alert list:" << alerts.dump() << endl;
+
+  long int now = static_cast<long int>(time(nullptr));
+  cout << fmt::format("Now: {}",now) << endl;
+
   return true;
 }

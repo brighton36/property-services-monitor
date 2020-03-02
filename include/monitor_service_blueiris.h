@@ -18,6 +18,16 @@ class WebClient {
     std::string get(std::string path);
 };
 
+/*
+class BlueIrisAlert {
+  std::string camera, short_clip, displayed_length, short_path, resolution;
+  unsigned int offset;
+  time_t occurred_at;
+  public:
+    BlueIrisAlert(nlohmann::json);
+};
+*/
+
 class MonitorServiceBlueIris : public MonitorServiceBase { 
   public:
     std::string username, password, session;
@@ -27,6 +37,6 @@ class MonitorServiceBlueIris : public MonitorServiceBase {
   private:
     std::unique_ptr<WebClient> client;
     static ServiceRegister<MonitorServiceBlueIris> reg;
-    // TODO: Use pointers?
     nlohmann::json sendCommand(std::string, nlohmann::json);
+
 }; 
