@@ -1,5 +1,11 @@
 #include "web_client.h"
 
+#include "Poco/Net/HTTPRequest.h"
+#include "Poco/Net/HTTPResponse.h"
+#include "Poco/Net/HTTPSClientSession.h"
+#include "Poco/StreamCopier.h"
+#include "Poco/Exception.h"
+
 using namespace std;
 using namespace Poco::Net;
 
@@ -20,7 +26,6 @@ tuple<unsigned int, string> WebClient::post(string path, string body) {
 	request.setContentType("text/plain");
 	request.setContentLength( body.length() );
 
-  unsigned int status_code;
   HTTPResponse res;
   stringstream ss;
 
@@ -31,15 +36,11 @@ tuple<unsigned int, string> WebClient::post(string path, string body) {
       Context::VERIFY_NONE, 9, false, "ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
 
     HTTPSClientSession session(address, port, context);
-    
     session.sendRequest(request) << body;
-
     Poco::StreamCopier::copyStream(session.receiveResponse(res), ss);
   } else {
     HTTPClientSession session(address, port);
-
     session.sendRequest(request) << body;
-
     Poco::StreamCopier::copyStream(session.receiveResponse(res), ss);
   }
 
