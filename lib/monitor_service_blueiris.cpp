@@ -10,6 +10,38 @@ using namespace nlohmann;
 
 ServiceRegister<MonitorServiceBlueIris> MonitorServiceBlueIris::reg("blueiris");
 
+BlueIrisAlert::BlueIrisAlert(nlohmann::json from) {
+	camera    = from["camera"];
+	clip      = from["clip"];
+	color     = from["color"];
+	filesize  = from["filesize"];
+	flags     = from["flags"];
+  newalerts = from.value("newalerts", 0);
+	offset    = from["offset"];
+	path      = from["path"];
+	res       = from["res"];
+	zones     = from["zones"];
+
+  // NOTE: I'm ignoring zones here. Which, seems to work as expected as long as
+  // "we" are in the same zone as the server we're querying. 
+  date = static_cast<time_t>(from["date"]);
+}
+
+std::string BlueIrisAlert::dateAsString(std::string fmt) {
+  char strf_out[80];
+
+  strftime(strf_out,80,fmt.c_str(),localtime(&date));
+
+  return std::string(strf_out);
+}
+
+std::string BlueIrisAlert::pathThumb() { 
+  return fmt::format("/thumbs/{}", path);
+}
+
+std::string BlueIrisAlert::pathClip() { 
+  return fmt::format("/file/clips/{}?time=0&cache=1&h=240", clip);
+}
 std::string MonitorServiceBlueIris::Help() { 
   return "TODO";
 }
@@ -37,6 +69,8 @@ MonitorServiceBlueIris::MonitorServiceBlueIris(string address, PTR_MAP_STR_STR p
   });
 
   // TODO: Username and pass are required. Fail if omitted
+  //  throw invalid_argument(fmt::format("Unrecognized web proto \"{}\".", v));
+  //
   client = make_unique<WebClient>(address, port, isSSL);
 }
 
@@ -104,8 +138,7 @@ MonitorServiceBlueIris::getAlerts(time_t since = 0, string camera = "Index") {
 
   json alerts = sendCommand("alertlist", options);
 
-	for (auto& [i, json_alert] : alerts.items())
-		ret->push_back(BlueIrisAlert(json_alert));
+  for (auto& [i, alert] : alerts.items()) ret->push_back(BlueIrisAlert(alert));
 
   return ret;
 }
@@ -130,10 +163,28 @@ bool MonitorServiceBlueIris::isAvailable() {
     
     auto alerts = getAlerts(mktime(&since));
 
-    for (auto& alert : *alerts)
-      cout << alert.camera << " : " << alert.dateAsString("%Y-%m-%d %H:%M") << endl;
+    map<string,string> get_header;
+    get_header["Cookie"] = fmt::format("session={}", session);
+    get_header["Accept"] = "image/webp,image/apng,image/*,*/*;q=0.8";
+
+    for (auto& alert : *alerts) {
+      cout << "Camera Alert: " << alert.camera << " @ " << alert.dateAsString("%Y-%m-%d %H:%M") << endl;
+      auto [code, body] = client->get(alert.pathThumb(), get_header);
+      cout << "   - Received:" << code << "Body: " << body.length() << endl; 
+    }
 
     // TODO: Download the pictures somewhere...
+    // Teeny ones: http://10.0.0.9:81/thumbs/@314919850.bvr
+    // Request URL: http://10.0.0.16:81/file/clips/@71111452.bvr?time=0&cache=1&h=240
+    // image/webp,image/apng,image/*,*/*;q=0.8
+    //
+    //Accept: image/webp,image/apng,image/*,*/*;q=0.8
+    //Accept-Encoding: gzip, deflate
+    //Accept-Language: en-US,en;q=0.9
+    //Connection: keep-alive
+    //Cookie: session=3de7066f6a761c0052495f7d2906487c
+    //Host: 10.0.0.9:81
+    //Referer: http://10.0.0.9:81/ui3.htm
 
   } catch(BlueIrisException& e) {
     // TODO

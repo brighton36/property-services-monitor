@@ -6,12 +6,14 @@
 
 class BlueIrisAlert {
   public:
-    std::string camera, clip, filesize, short_path, resolution, path, res;
+    std::string camera, clip, filesize, resolution, path, res;
     unsigned int color, flags, newalerts, offset, zones;
     time_t date;
 
     BlueIrisAlert(nlohmann::json);
     std::string dateAsString(std::string);
+    std::string pathThumb();
+    std::string pathClip();
 };
 
 class MonitorServiceBlueIris : public MonitorServiceBase { 
@@ -27,30 +29,6 @@ class MonitorServiceBlueIris : public MonitorServiceBase {
     std::shared_ptr<std::vector<BlueIrisAlert>> getAlerts(time_t, std::string);
 }; 
 
-BlueIrisAlert::BlueIrisAlert(nlohmann::json from) {
-	camera    = from["camera"];
-	clip      = from["clip"];
-	color     = from["color"];
-	filesize  = from["filesize"];
-	flags     = from["flags"];
-  newalerts = from.value("newalerts", 0);
-	offset    = from["offset"];
-	path      = from["path"];
-	res       = from["res"];
-	zones     = from["zones"];
-
-  // NOTE: I'm ignoring zones here. Which, seems to work as expected as long as
-  // "we" are in the same zone as the server we're querying. 
-  date = static_cast<time_t>(from["date"]);
-}
-
-std::string BlueIrisAlert::dateAsString(std::string fmt) {
-  char strf_out[80];
-
-  strftime(strf_out,80,fmt.c_str(),localtime(&date));
-
-  return std::string(strf_out);
-}
 
 class BlueIrisException : public std::exception {
   public:

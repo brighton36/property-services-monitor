@@ -1,10 +1,11 @@
 #include "web_client.h"
 
-#include "Poco/Net/HTTPRequest.h"
 #include "Poco/Net/HTTPResponse.h"
 #include "Poco/Net/HTTPSClientSession.h"
 #include "Poco/StreamCopier.h"
 #include "Poco/Exception.h"
+
+#include <iostream> // TODO: remove
 
 using namespace std;
 using namespace Poco::Net;
@@ -12,38 +13,50 @@ using namespace Poco::Net;
 WebClient::WebClient(string address, int port, bool isSSL) {
   this->address = address;
   this->port = port;
-  this->isSSL = isSSL; // TODO: Make this work
+  this->isSSL = isSSL;
 }
 
-tuple<unsigned int, string> WebClient::get(string path) {
-  // Integrate this in the monitor_service_web as well as below
-  return make_tuple(500, path);
-}
-
-tuple<unsigned int, string> WebClient::post(string path, string body) {
-  HTTPRequest request( HTTPRequest::HTTP_POST, path, HTTPMessage::HTTP_1_1 );
-
-	request.setContentType("text/plain");
-	request.setContentLength( body.length() );
-
+// TODO: Pass params By references....
+TUPLE_INT_STR WebClient::req(Poco::Net::HTTPRequest *request, string body, MAP_STR_STR headers) {
   HTTPResponse res;
   stringstream ss;
 
+	for(MAP_STR_STR::iterator it = headers.begin(); it != headers.end(); it++)
+    request->set(it->first, it->second);
+
+  // TODO: Check request.type instead merbe. Yeah, rather that take a request, take a HTTPREquest::HTTP_*
+  if (!body.empty()) request->setContentLength( body.length() );
+
   if (isSSL) {
-    // TODO: It'd be nice to test this somehow... make we can make this branch
-    // a private method, and call it from get and post....
     const Context::Ptr context = new Context( Context::CLIENT_USE, "", "", "", 
       Context::VERIFY_NONE, 9, false, "ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
 
     HTTPSClientSession session(address, port, context);
-    session.sendRequest(request) << body;
+    std::ostream& os = session.sendRequest(*request);
+
+    if (!body.empty()) os << body;
+
     Poco::StreamCopier::copyStream(session.receiveResponse(res), ss);
   } else {
     HTTPClientSession session(address, port);
-    session.sendRequest(request) << body;
+    std::ostream& os = session.sendRequest(*request);
+
+    if (!body.empty()) os << body;
+
     Poco::StreamCopier::copyStream(session.receiveResponse(res), ss);
   }
-
 	
 	return make_tuple(res.getStatus(), ss.str());
 }
+
+TUPLE_INT_STR WebClient::get(string path, MAP_STR_STR headers) {
+  HTTPRequest request( HTTPRequest::HTTP_GET, path, HTTPMessage::HTTP_1_1 );
+	return this->req(&request, string(), headers);
+}
+
+
+TUPLE_INT_STR WebClient::post(string path, string body, MAP_STR_STR headers) {
+  HTTPRequest request( HTTPRequest::HTTP_POST, path, HTTPMessage::HTTP_1_1 );
+	return this->req(&request, body, headers);
+}
+
