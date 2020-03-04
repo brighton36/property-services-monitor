@@ -1,5 +1,7 @@
 #include "property-services-monitor.h"
 
+#include "web_client.h"
+
 class MonitorServiceWeb : public MonitorServiceBase { 
   public:
     unsigned int port, status_equals;
@@ -9,9 +11,9 @@ class MonitorServiceWeb : public MonitorServiceBase {
 
     MonitorServiceWeb(std::string, PTR_MAP_STR_STR);
     bool isAvailable();
-    std::string httxRequest(std::string path, Poco::Net::HTTPResponse &);
     static std::string Help();
   private:
+    std::unique_ptr<WebClient> client;
     static ServiceRegister<MonitorServiceWeb> reg;
 }; 
 

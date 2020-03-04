@@ -14,8 +14,8 @@
 
 #include "inja.hpp"
 
-#ifndef MONITOR_JOB_H
-#define MONITOR_JOB_H
+#ifndef PROPERTY_SERVICES_MONITOR_H
+#define PROPERTY_SERVICES_MONITOR_H
 
 #ifdef __GNUC__
 #define UNUSED __attribute((unused))

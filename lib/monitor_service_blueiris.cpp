@@ -50,7 +50,7 @@ MonitorServiceBlueIris::MonitorServiceBlueIris(string address, PTR_MAP_STR_STR p
   : MonitorServiceBase("blueiris", address, params) { 
   // TODO : Params 
   
-  unsigned int port = 81;
+  unsigned int port = 81; // TODO: wot?
   bool isSSL = false;
   session = string();
 
@@ -71,6 +71,8 @@ MonitorServiceBlueIris::MonitorServiceBlueIris(string address, PTR_MAP_STR_STR p
   // TODO: Username and pass are required. Fail if omitted
   //  throw invalid_argument(fmt::format("Unrecognized web proto \"{}\".", v));
   //
+  if (!port) port = (isSSL) ? 443 : 80;
+
   client = make_unique<WebClient>(address, port, isSSL);
 }
 
@@ -172,19 +174,6 @@ bool MonitorServiceBlueIris::isAvailable() {
       auto [code, body] = client->get(alert.pathThumb(), get_header);
       cout << "   - Received:" << code << "Body: " << body.length() << endl; 
     }
-
-    // TODO: Download the pictures somewhere...
-    // Teeny ones: http://10.0.0.9:81/thumbs/@314919850.bvr
-    // Request URL: http://10.0.0.16:81/file/clips/@71111452.bvr?time=0&cache=1&h=240
-    // image/webp,image/apng,image/*,*/*;q=0.8
-    //
-    //Accept: image/webp,image/apng,image/*,*/*;q=0.8
-    //Accept-Encoding: gzip, deflate
-    //Accept-Language: en-US,en;q=0.9
-    //Connection: keep-alive
-    //Cookie: session=3de7066f6a761c0052495f7d2906487c
-    //Host: 10.0.0.9:81
-    //Referer: http://10.0.0.9:81/ui3.htm
 
   } catch(BlueIrisException& e) {
     // TODO

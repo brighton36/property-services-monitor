@@ -1,11 +1,5 @@
 #include "monitor_service_web.h"
 
-#include "Poco/Net/HTTPRequest.h"
-#include "Poco/Net/HTTPClientSession.h"
-#include "Poco/Net/HTTPSClientSession.h"
-#include "Poco/StreamCopier.h"
-#include "Poco/Exception.h"
-
 using namespace std;
 
 ServiceRegister<MonitorServiceWeb> MonitorServiceWeb::reg("web");
@@ -48,47 +42,18 @@ MonitorServiceWeb::MonitorServiceWeb(string address, PTR_MAP_STR_STR params)
   });
 
   if (!port) port = (isHttps) ? 443 : 80;
-}
 
-string MonitorServiceWeb::httxRequest(string path, Poco::Net::HTTPResponse &response) {
-
-  string content;
-
-  Poco::Net::HTTPRequest request( Poco::Net::HTTPRequest::HTTP_GET, 
-    path, Poco::Net::HTTPMessage::HTTP_1_1 );
-
-  if (isHttps) {
-    const Poco::Net::Context::Ptr context = new Poco::Net::Context(
-      Poco::Net::Context::CLIENT_USE, "", "", "",
-      Poco::Net::Context::VERIFY_NONE, 9, false,
-      "ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
-    Poco::Net::HTTPSClientSession session(address, port, context);
-    session.sendRequest(request);
-
-    Poco::StreamCopier::copyToString(session.receiveResponse(response), content);
-    return content;
-  } else {
-    Poco::Net::HTTPClientSession session(address, port);
-    session.sendRequest(request);
-
-    Poco::StreamCopier::copyToString(session.receiveResponse(response), content);
-    return content;
-  }
+  client = make_unique<WebClient>(address, port, isHttps);
 }
 
 bool MonitorServiceWeb::isAvailable() {
   MonitorServiceBase::isAvailable();
 
   try {
-    Poco::Net::HTTPResponse response;
+    auto [status_code, response_content] = client->get(path);
 
-    string response_content = httxRequest(path, response);
-
-    resultAdd("response_status", to_string(response.getStatus()));
-    resultAdd("response_reason", response.getReason());
+    resultAdd("response_status", to_string(status_code));
     resultAdd("response_content", response_content);
-
-    auto status_code = response.getStatus();
 
     if (status_code == status_equals) {
       if (!ensure_match.empty()) {
