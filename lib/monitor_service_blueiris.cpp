@@ -1,55 +1,13 @@
 #include "monitor_service_blueiris.h"
 
 #include <ctime>
-#include <chrono>
 
 #include "Poco/MD5Engine.h"
 #include "Poco/DigestStream.h"
 
 using namespace std;
 using namespace nlohmann;
-using namespace Poco::Net;
 
-WebClient::WebClient(string address, int port, bool isSSL) {
-  this->address = address;
-  this->port = port;
-  this->isSSL = isSSL; // TODO: Make this work
-}
-
-// TODO: I think we want to return a response and a string pair
-string WebClient::get(string path) {
-  // Integrate this in the monitor_service_web as well as below
-  cout << path << endl;
-  return "TODO";
-}
-
-// TODO: I think we want to return a response and a string pair
-string WebClient::post(string path, string body) {
-  Poco::Net::HTTPRequest request( Poco::Net::HTTPRequest::HTTP_POST, path, HTTPMessage::HTTP_1_1 );
-
-	request.setContentType("text/plain");
-
-	request.setContentLength( body.length() );
-
-  HTTPClientSession session(address, port);
-
-  ostream& os = session.sendRequest(request);
-
-	os << body;
-
-  HTTPResponse res;
-  cout << res.getStatus() << " " << res.getReason() << endl;
-
-  istream &is = session.receiveResponse(res);
-
-	stringstream ss;
-	Poco::StreamCopier::copyStream(is, ss);
-	
-	return ss.str();
-}
-
-
-//////////////////////////////////
 ServiceRegister<MonitorServiceBlueIris> MonitorServiceBlueIris::reg("blueiris");
 
 std::string MonitorServiceBlueIris::Help() { 
@@ -78,85 +36,110 @@ MonitorServiceBlueIris::MonitorServiceBlueIris(string address, PTR_MAP_STR_STR p
     } }
   });
 
-  // tODO: Username and pass are required. Fail if omitted
+  // TODO: Username and pass are required. Fail if omitted
   client = make_unique<WebClient>(address, port, isSSL);
 }
 
 json MonitorServiceBlueIris::sendCommand(string command, json options = json()) {
   string response;
+  unsigned int code;
+  json json_response;
 
   if (session.empty()) {
-    // Let's login/create a session
+    // Let's login & create a session:
     string first_response;
-    response = client->post("/json", json( {{"cmd", "login"}} ).dump());
 
-    // TODO: Check for 200 code
-    auto first_json = json::parse(response);
+    tie(code, response) = client->post("/json", json( {{"cmd", "login"}} ).dump());
 
-    auto proposed_session = string(first_json["session"]);
+    if (code != 200)
+      throw BlueIrisException("Error code {} when requesting login page.", code);
 
-    string auth_content = fmt::format("{}:{}:{}", username, proposed_session, password);
+    string proposed_session = json::parse(response)["session"].get<string>();
 
     Poco::MD5Engine eng;
-    eng.update(auth_content);
-    string login_response = Poco::DigestEngine::digestToHex(eng.digest());
+    eng.update(fmt::format("{}:{}:{}", username, proposed_session, password));
 
-    response = client->post("/json", json({ 
-      {"cmd", "login"}, {"session", proposed_session}, {"response", login_response} 
+    tie(code, response) = client->post("/json", json({ 
+      {"cmd", "login"}, {"session", proposed_session}, 
+      {"response", Poco::DigestEngine::digestToHex(eng.digest())} 
     }).dump());
-    // TODO: Check for 200 code
 
-    cout << "Authenticated OK:" << response << endl;
+    if (code != 200)
+      throw BlueIrisException("Error code {} in response to authentication request.", code);
+
+    json_response = json::parse(response);
+
+    if (json_response["result"] != "success")
+      throw BlueIrisException("Error Result {} in response to authentication request.", 
+        json_response["result"]);
+
+    // Authentication Suceeded. Set our session code so that we don't authenticate
+    // again.
     session = proposed_session;
   }
 
   options["session"] = session;
   options["cmd"] = command;
 
-  response = client->post("/json", options.dump());
+  tie(code, response) = client->post("/json", options.dump());
 
-  // TODO: Check for 200 code
-  // TODO: Check for response["result"] equalling "success"
-  // TODO: Check for response["session"] equalling what we have
-  return json::parse(response);
+  json_response = json::parse(response);
+  if (code != 200)
+    throw BlueIrisException("Error code {} in response to {} command.", code, command);
+
+  if (json_response["result"] != "success")
+    throw BlueIrisException("Error Result {} in response to {} command.", 
+      json_response["result"], command);
+
+  return json_response["data"];
+}
+
+shared_ptr<vector<BlueIrisAlert>> 
+MonitorServiceBlueIris::getAlerts(time_t since = 0, string camera = "Index") {
+  auto ret = make_shared<vector<BlueIrisAlert>>();
+
+  json options = {{"camera", camera}};
+
+  if (since > 0) options["startdate"] = (long int) since;
+
+  json alerts = sendCommand("alertlist", options);
+
+	for (auto& [i, json_alert] : alerts.items())
+		ret->push_back(BlueIrisAlert(json_alert));
+
+  return ret;
 }
 
 bool MonitorServiceBlueIris::isAvailable() {
   MonitorServiceBase::isAvailable();
 
-  // TODO : try/Catch errors
-  /*
-  json response; 
+  try {
+    json status = sendCommand("status");
 
-  response = sendCommand("status");
+    cout << "Status:" << status.dump() << endl;
 
-	cout << "Status:" << response.dump() << endl;
+    // TODO: If params are configured, test that the disks amount free is above the 
+    // threshold. Maybe check the warnings is under a threshold and that uptime is 
+    // over ... a threshold
 
-  response = sendCommand("log");
+    // And now let's scoop up any interesting pictures we can include in our 
+    // report:
+    time_t now = time(nullptr);
+    struct tm since = *localtime(&now);
+    since.tm_hour -= 1; // TODO: Figure out how to pull these...
+    
+    auto alerts = getAlerts(mktime(&since));
 
-	cout << "Log:" << response.dump() << endl;
-  */
+    for (auto& alert : *alerts)
+      cout << alert.camera << " : " << alert.dateAsString("%Y-%m-%d %H:%M") << endl;
 
-  // TODO: let's make use of startdate and index via a param
-  json alerts = sendCommand("alertlist", {{"camera", "Index"}});
+    // TODO: Download the pictures somewhere...
 
-	cout << "Alerts:" << endl;
-  // TODO: What to do about the zone... and let's maybe put this into a getAlerts() function
-	for (auto& [i, alert] : alerts["data"].items()) {
-    // TODO: auto bi_alert = BlueIrisAlert(alert);
-
-		time_t date = static_cast<time_t>(alert["date"]);
-		char date_string[80];
-
-		strftime(date_string,80,"%Y-%m-%d %H:%M",localtime(&date));
-
-		cout << i << " : " << alert["camera"] << " : " << string(date_string) << endl;
-	}
-
-	//cout << "alert list:" << alerts.dump() << endl;
-
-  long int now = static_cast<long int>(time(nullptr));
-  cout << fmt::format("Now: {}",now) << endl;
+  } catch(BlueIrisException& e) {
+    // TODO
+    cout << "BlueIrisException :" << e.what() << std::endl;
+    return resultFail("BlueIrisException {}", e.what());
+  } 
 
   return true;
 }
