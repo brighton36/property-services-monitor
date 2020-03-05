@@ -31,39 +31,33 @@ bool pathIsReadable(string path) {
 time_t relative_time_from(time_t starting_at, string adjustment) {
 	smatch matches;
 
-	time_t ret = starting_at;
-
   auto match_hh_mm = regex("([\\d]{1,2})\\:([\\d]{2})(?:[ ]*([p|P])|)");
-  auto match_day =  regex(
-    "(?:(yesterday)|([\\d]+|the)[ ]*day[s]?[ ]*|day[s]?[ ]*(?:prior|ago|before|back))", 
+  auto match_day = regex(
+    "(?:yesterday|([\\d]+|the)[ ]*day[s]?[ ]*|day[s]?[ ]*(?:prior|ago|before|back))", 
     regex_constants::icase
   );
-  auto match_hour =  regex(
+  auto match_hour = regex(
     "(?:([\\d]+|the)[ ]*hour[s]?[ ]*|hour[s]?[ ]*(?:prior|ago|before|back))", 
     regex_constants::icase
   );
-  auto match_min =  regex(
+  auto match_min = regex(
     "(?:([\\d]+|the)[ ]*(?:min|minute)[s]?[ ]*|(?:min|minute)[s]?[ ]*(?:prior|ago|before|back))", 
     regex_constants::icase
   );
+  auto match_num = regex("^[\\d]+$");
 
   // These are the spin-backward instructions
-  if (regex_search(adjustment, matches, match_day)) {
-    unsigned int days_back = 1;
+  if (regex_search(adjustment, matches, match_day))
+    starting_at -= 24 * 60 * 60 * (
+      (regex_match(string(matches[1]), match_num)) ? stoi(matches[1]) : 1);
 
-    if ((!string(matches[2]).empty()) && regex_match(string(matches[2]), regex("^[\\d]+$")))
-      days_back = stoi(matches[2]);
+  if (regex_search(adjustment, matches, match_hour))
+    starting_at -= 60 * 60 * (
+      (regex_match(string(matches[1]), match_num)) ? stoi(matches[1]) : 1);
 
-    ret -= (days_back * 24 * 60 * 60);
-  }
-
-  if (regex_search(adjustment, matches, match_hour)) {
-    ret -= ( (matches[1] == "the") ? 1 : stoi(matches[1]) ) * (60 * 60);
-  } 
-
-  if (regex_search(adjustment, matches, match_min)) {
-    ret -= ( (matches[1] == "the") ? 1 : stoi(matches[1]) ) * 60;
-  }
+  if (regex_search(adjustment, matches, match_min))
+    starting_at -= 60 * ( 
+      (regex_match(string(matches[1]), match_num)) ? stoi(matches[1]) : 1);
 
   if(regex_search(adjustment, matches, match_hh_mm)) {
     unsigned int set_hour = stoi(matches[1]);
@@ -72,12 +66,12 @@ time_t relative_time_from(time_t starting_at, string adjustment) {
     // Check for a PM indication:
     if ( !string(matches[3]).empty() && (set_hour < 12)) set_hour += 12;
 
-    struct tm *tm_ret = localtime(&ret);
+    struct tm *tm_ret = localtime(&starting_at);
     tm_ret->tm_hour = set_hour;
     tm_ret->tm_min = set_minute;
 
-    ret = mktime(tm_ret);
+    starting_at = mktime(tm_ret);
   }
 
-  return ret;
+  return starting_at;
 }
