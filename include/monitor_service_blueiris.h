@@ -16,6 +16,7 @@ class BlueIrisException : public std::exception {
 class MonitorServiceBlueIris : public MonitorServiceBase { 
   public:
     std::string username, password, session;
+    std::string capture_from, capture_to, capture_camera;
     MonitorServiceBlueIris(std::string, PTR_MAP_STR_STR);
     bool isAvailable();
     static std::string Help();

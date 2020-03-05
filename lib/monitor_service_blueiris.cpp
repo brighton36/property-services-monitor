@@ -16,11 +16,11 @@ std::string MonitorServiceBlueIris::Help() {
 
 MonitorServiceBlueIris::MonitorServiceBlueIris(string address, PTR_MAP_STR_STR params) 
   : MonitorServiceBase("blueiris", address, params) { 
-  // TODO : Params 
-  
-  unsigned int port = 81; // TODO: wot?
+  unsigned int port = 0;
   bool isSSL = false;
   session = string();
+  capture_from = "Yesterday";
+  capture_camera = "Index";
 
   setParameters({
     {"port",     [&](string v) { port = stoi(v);}},
@@ -33,13 +33,16 @@ MonitorServiceBlueIris::MonitorServiceBlueIris(string address, PTR_MAP_STR_STR p
         isSSL = true;
       else
         throw invalid_argument(fmt::format("Unrecognized web proto \"{}\".", v));
-    } }
-  });
+    } },
+    {"capture_from", [&](string v) { capture_from = v;}},
+    {"capture_to",   [&](string v) { capture_to = v;}},
+    {"capture_camera",   [&](string v) { capture_camera = v;}},
+  } );
 
-  // TODO: Username and pass are required. Fail if omitted
-  //  throw invalid_argument(fmt::format("Unrecognized web proto \"{}\".", v));
-  //
-  if (!port) port = (isSSL) ? 443 : 80;
+  if (username.empty()) throw invalid_argument("Missing required field \"username\".");
+  if (password.empty()) throw invalid_argument("Missing required field \"password\".");
+ 
+  if (!port) port = (isSSL) ? 443 : 81;
 
   client = make_unique<WebClient>(address, port, isSSL);
 }
@@ -119,28 +122,53 @@ bool MonitorServiceBlueIris::isAvailable() {
   try {
     json status = sendCommand("status");
 
-    cout << "Status:" << status.dump() << endl;
+    // TODO: Test the disk free
+    for( const auto& disk : status["disks"] ) {
+      cout << "Disk Free %: " << (float(disk["free"]) / float(disk["total"]) * 100) << endl;
+    }
 
-    // TODO: If params are configured, test that the disks amount free is above the 
-    // threshold. Maybe check the warnings is under a threshold and that uptime is 
-    // over ... a threshold
+    // TODO: Test the warnings 
+    unsigned int warnings = stoi(status["warnings"].get<string>());
+    cout << "Warnings: " << warnings << endl;
+    
+    // TODO: Test the uptime
+    cout << "Uptime: " << status["uptime"] << endl;
 
-    // And now let's scoop up any interesting pictures we can include in our 
+    // And now let's capture any interesting pictures we can include in our 
     // report:
     time_t now = time(nullptr);
-    struct tm since = *localtime(&now);
-    since.tm_hour -= 1; // TODO: Figure out how to pull these...
-    
-    auto alerts = getAlerts(mktime(&since));
+    auto alerts = getAlerts(relative_time_from(now, capture_from), capture_camera);
+    time_t alerts_upto = relative_time_from(now, capture_to);
+
+    alerts->erase( remove_if( alerts->begin(), alerts->end(),
+      [alerts_upto](const BlueIrisAlert & a) { return a.date > alerts_upto; }),
+      alerts->end());
 
     map<string,string> get_header;
     get_header["Cookie"] = fmt::format("session={}", session);
     get_header["Accept"] = "image/webp,image/apng,image/*,*/*;q=0.8";
 
     for (auto& alert : *alerts) {
-      cout << "Camera Alert: " << alert.camera << " @ " << alert.dateAsString("%Y-%m-%d %H:%M") << endl;
+      string tmpbase = tmpnam(nullptr);
+
+      // Jpg:
       auto [code, body] = client->get(alert.pathThumb(), get_header);
-      cout << "   - Received:" << code << "Body: " << body.length() << endl; 
+      // TODO: Test the code == 200
+      ofstream out(fmt::format("{}.jpg", tmpnam(nullptr)));
+      out << body;
+      out.close();
+
+      // WebP:
+      tie(code, body) = client->get(alert.pathClip(), get_header);
+      // TODO: Test the code == 200
+      ofstream outb(fmt::format("{}-smaller.jpg", tmpnam(nullptr)));
+      outb << body;
+      outb.close();
+
+      // TODO: Didn't we have animations?
+
+      cout << "Alert: " << alert.dateAsString("%Y-%m-%d %H:%M") << " " << alert.camera << " "
+        << " Received: " << tmpbase << endl; 
     }
 
   } catch(BlueIrisException& e) {
