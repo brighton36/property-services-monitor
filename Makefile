@@ -122,8 +122,8 @@ $(BUILD_PATH)/test-$(BIN_NAME).o: src/test.$(SRC_EXT)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(INCLUDES) -MP -MMD -c $< -o $@
 
 .PHONY: test
-test:
+test: dirs $(BIN_PATH)/test-$(BIN_NAME)
 	@echo "Building test executable..."
-	@$(MAKE) $(BUILD_PATH)/bin/test-$(BIN_NAME)
+	#@$(MAKE) $(BUILD_PATH)/bin/test-$(BIN_NAME)
 	@$(BUILD_PATH)/bin/test-$(BIN_NAME)
 

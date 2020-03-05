@@ -64,4 +64,3 @@ TUPLE_INT_STR WebClient::post(std::string path, std::string body) {
 TUPLE_INT_STR WebClient::post(string path, string body, MAP_STR_STR headers) {
 	return req(HTTPRequest::HTTP_POST, &path, &body, &headers);
 }
-

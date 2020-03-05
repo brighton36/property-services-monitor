@@ -1,19 +1,16 @@
 #include "property-services-monitor.h"
-
+#include "blue_iris_alert.h"
 #include "web_client.h"
 
-#include <ctime>
-
-class BlueIrisAlert {
+class BlueIrisException : public std::exception {
   public:
-    std::string camera, clip, filesize, resolution, path, res;
-    unsigned int color, flags, newalerts, offset, zones;
-    time_t date;
-
-    BlueIrisAlert(nlohmann::json);
-    std::string dateAsString(std::string);
-    std::string pathThumb();
-    std::string pathClip();
+    std::string s;
+    BlueIrisException(std::string ss) : s(ss) {}
+    template<typename... Args> BlueIrisException(std::string reason, Args... args) {
+      s = fmt::format(reason, args...);
+    }
+    ~BlueIrisException() throw () {}
+    const char* what() const throw() { return s.c_str(); }
 };
 
 class MonitorServiceBlueIris : public MonitorServiceBase { 
@@ -29,14 +26,3 @@ class MonitorServiceBlueIris : public MonitorServiceBase {
     std::shared_ptr<std::vector<BlueIrisAlert>> getAlerts(time_t, std::string);
 }; 
 
-
-class BlueIrisException : public std::exception {
-  public:
-    std::string s;
-    BlueIrisException(std::string ss) : s(ss) {}
-    template<typename... Args> BlueIrisException(std::string reason, Args... args) {
-      s = fmt::format(reason, args...);
-    }
-    ~BlueIrisException() throw () {}
-    const char* what() const throw() { return s.c_str(); }
-};

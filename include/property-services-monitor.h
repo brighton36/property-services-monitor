@@ -5,6 +5,7 @@
 #include <map> 
 #include <fmt/ostream.h>
 #include <filesystem>
+#include <ctime>
 
 #include "yaml-cpp/yaml.h"
 
@@ -30,6 +31,7 @@
 
 bool pathIsReadable(std::string);
 bool has_any(std::vector<std::string>, std::vector<std::string>);
+time_t relative_time_from(time_t, std::string);
 
 template<typename T> std::shared_ptr<MonitorServiceBase> \
   createT(std::string address, PTR_MAP_STR_STR params) {
