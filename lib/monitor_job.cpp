@@ -80,21 +80,16 @@ nlohmann::json MonitorJob::toJson() {
     json_host["services"] = nlohmann::json::array();
 
     for(const auto service: host->services) {
-      auto json_service = nlohmann::json::object();
       auto [errors, results] = service->fetchResults();
+      auto json_service = nlohmann::json::object();
       bool is_up = errors->empty();
 
       if (!is_up) ret["has_failures"] = true;
 
-      // TODO : This is hokey. let's change this to support the vector
-      (*results)["failure_reason"] = (is_up) ? "" : (*errors)[0];
-
+      json_service["failures"] = nlohmann::json(*errors);
       json_service["type"] = service->type;
       json_service["is_up"] = is_up;
-      json_service["results"] = nlohmann::json::object();
-
-      for(auto it=results->begin();it!=results->end();++it)
-        json_service["results"][it->first] = it->second;
+      json_service["results"] = nlohmann::json(*results);
 
       json_host["services"].push_back(json_service);
     }

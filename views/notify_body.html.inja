@@ -34,7 +34,9 @@
     <p class="color-failed strong indent">{{ h(service.type) }}: Errors Encountered.</li>
     <p class="color-failed indent">Error(s) were found while scanning &quot;{{ h(host.address)}}&quot;</p>
     <ul class="indent pad-bottom">
-      <li class="color-failed">{{ h(service.results.failure_reason) }}</li>
+      {% for failure in service.failures %}
+      <li class="color-failed">{{ h(failure) }}</li>
+      {% endfor %}
     </ul>
   {% endif %}
 {% endfor %}

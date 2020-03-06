@@ -22,7 +22,9 @@ Generated: {{f("%02d",now.mon)}}/{{f("%02d",now.mday)}}/{{f("%04d",now.year)}} {
 {% else %}
 - {{ service.type }}: Errors Encountered.
   Error(s) were found while scanning "{{ host.address}}"
-  {{ service.results.failure_reason }}
+  {% for failure in service.failures %}
+  {{ failure }}
+  {% endfor %}
 {% endif %}
 {% endfor %}
 

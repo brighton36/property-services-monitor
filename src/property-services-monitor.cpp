@@ -127,18 +127,12 @@ int main(int argc, char* argv[]) {
   // Send the email:
   try {
     notifier.sendResults(&tmpl_data);
-  } catch (Poco::Net::SMTPException &e) {
-    fmt::print(cerr, "SMTP Exception Encountered: {} {} {} {}\n", 
-      e.code(), e.what(), e.message(), e.displayText().c_str() );
-    return 1;
-  } catch (Poco::FileNotFoundException &e) {
-    // TODO: Catch all these Poco exceptions into this:
-    fmt::print(cerr, "Exception Encountered: {} \n", e.displayText() );
+  } catch (const Poco::Exception &e) {
+    fmt::print(cerr, "POCO Exception Encountered: {} \n", e.displayText() );
     return 1;
   }
-  catch (Poco::Net::NetException &e) {
-    fmt::print(cerr, "Net Exception Encountered: {} {} {} {}\n", 
-      e.code(), e.what(), e.message(), e.displayText().c_str() );
+  catch (const exception &e) {
+    fmt::print(cerr, "General Exception Encountered: {} \n", e.what() );
     return 1;
   }
     
