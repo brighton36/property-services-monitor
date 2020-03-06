@@ -4,18 +4,16 @@ class MonitorServiceBase {
   public:
     std::string address, type;
     PTR_MAP_STR_STR params;
-    PTR_MAP_STR_STR results;
 
     MonitorServiceBase(std::string, std::string, PTR_MAP_STR_STR);
+    virtual RESULT_TUPLE fetchResults();
 
-    virtual bool isAvailable();
+    template<typename... Args> 
+    void err(std::shared_ptr<std::vector<std::string>> errors, std::string reason, Args... args) {
+      errors->push_back(fmt::format(reason, args...));
+    }
   protected:
     void setParameters(std::map<std::string,std::function<void(std::string)>>);
-    bool resultAdd(std::string, std::string);
-    template<typename... Args> bool resultFail(std::string reason, Args... args) {
-      resultAdd("failure_reason", fmt::format(reason, args...));
-      return false;
-    }
 };
 
 class MonitorHost { 

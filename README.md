@@ -8,8 +8,8 @@ This tool is written in modern C++, and designed to be portable, for use on
 raspberri pi's, or similar systems.
 
 **NOTE: Some (most) systems require this executable to run as suid root, in order
-to perform ping tests. If you're seeing an "I/O Error" in your reports, this is
-why you're receiving that error message.**
+to perform ping tests. If you're seeing an "I/O error exception" in your reports, 
+this is why you're receiving that error message.**
 
 ## Installation
 The supplied 0.1 release contains compiled deb packages for amd64 and arm6+ 

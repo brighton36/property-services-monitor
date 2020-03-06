@@ -6,17 +6,13 @@ MonitorServiceBase::MonitorServiceBase(string t, string a, PTR_MAP_STR_STR p) {
   type = t;
   address = a;
   params = p;
-  results = make_shared<map<string, string>>();
 }
 
-bool MonitorServiceBase::isAvailable() { 
-  results->clear();
-  return true;
-}
+RESULT_TUPLE MonitorServiceBase::fetchResults() {
+  auto results = make_shared<map<string, string>>();
+  auto errors = make_shared<vector<string>>();
 
-bool MonitorServiceBase::resultAdd(string key, string value) { 
-  results->emplace(key, value);
-  return true;
+	return make_tuple(errors, results);
 }
 
 void MonitorServiceBase::setParameters(map<string,function<void(string)>> assigns) {

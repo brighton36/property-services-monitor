@@ -18,7 +18,7 @@ class MonitorServiceBlueIris : public MonitorServiceBase {
     std::string username, password, session;
     std::string capture_from, capture_to, capture_camera;
     MonitorServiceBlueIris(std::string, PTR_MAP_STR_STR);
-    bool isAvailable();
+    RESULT_TUPLE fetchResults();
     static std::string Help();
   private:
     std::unique_ptr<WebClient> client;

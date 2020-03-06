@@ -10,7 +10,7 @@ class MonitorServiceWeb : public MonitorServiceBase {
     bool isHttps;
 
     MonitorServiceWeb(std::string, PTR_MAP_STR_STR);
-    bool isAvailable();
+    RESULT_TUPLE fetchResults();
     static std::string Help();
   private:
     std::unique_ptr<WebClient> client;

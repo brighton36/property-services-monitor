@@ -46,14 +46,14 @@ MonitorServiceWeb::MonitorServiceWeb(string address, PTR_MAP_STR_STR params)
   client = make_unique<WebClient>(address, port, isHttps);
 }
 
-bool MonitorServiceWeb::isAvailable() {
-  MonitorServiceBase::isAvailable();
+RESULT_TUPLE MonitorServiceWeb::fetchResults() {
+  auto [errors, results] = MonitorServiceBase::fetchResults();
 
   try {
     auto [status_code, response_content] = client->get(path);
 
-    resultAdd("response_status", to_string(status_code));
-    resultAdd("response_content", response_content);
+    (*results)["response_status"] = to_string(status_code);
+    (*results)["response_content"] = response_content;
 
     if (status_code == status_equals) {
       if (!ensure_match.empty()) {
@@ -63,19 +63,16 @@ bool MonitorServiceWeb::isAvailable() {
           sregex_iterator( response_content.begin(), response_content.end(), re), 
           sregex_iterator());
 
-        resultAdd("response_match_count", to_string(match_count));
+        (*results)["response_match_count"] = to_string(match_count);
 
         if ( match_count == 0 )
-          return resultFail("Unable to find {} in content response", ensure_match);
+          err(errors, "Unable to find {} in content response", ensure_match);
       }
-
-      return true;
     }
     else
-      return resultFail("Server status code {} did not match the expected {} status code.", 
-          status_code, status_equals);
-  }
-  catch (const exception& e) { 
-    return resultFail(e.what());
-  }
+      err(errors,"Server status code {} did not match the expected {} status code.", 
+        status_code, status_equals);
+  } catch(const exception& e) { err(errors, "\"{}\" exception", e.what()); }
+
+	return make_tuple(errors, results);
 }

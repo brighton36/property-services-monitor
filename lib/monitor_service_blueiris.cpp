@@ -116,8 +116,8 @@ MonitorServiceBlueIris::getAlerts(time_t since = 0, string camera = "Index") {
   return ret;
 }
 
-bool MonitorServiceBlueIris::isAvailable() {
-  MonitorServiceBase::isAvailable();
+RESULT_TUPLE MonitorServiceBlueIris::fetchResults() {
+  auto [errors, results] = MonitorServiceBase::fetchResults();
 
   try {
     json status = sendCommand("status");
@@ -134,6 +134,7 @@ bool MonitorServiceBlueIris::isAvailable() {
     // TODO: Test the uptime
     cout << "Uptime: " << status["uptime"] << endl;
 
+    // TODO: These should go it its own function:
     // And now let's capture any interesting pictures we can include in our 
     // report:
     time_t now = time(nullptr);
@@ -171,11 +172,10 @@ bool MonitorServiceBlueIris::isAvailable() {
         << " Received: " << tmpbase << endl; 
     }
 
-  } catch(BlueIrisException& e) {
-    // TODO
+  } catch(const exception& e) { 
     cout << "BlueIrisException :" << e.what() << std::endl;
-    return resultFail("BlueIrisException {}", e.what());
-  } 
+    err(errors, "\"{}\" exception", e.what()); 
+  }
 
-  return true;
+	return make_tuple(errors, results);
 }
