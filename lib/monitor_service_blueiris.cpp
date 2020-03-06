@@ -182,6 +182,8 @@ RESULT_TUPLE MonitorServiceBlueIris::fetchResults() {
   try {
     json status = sendCommand("status");
 
+    // TODO :We may want to declare teh empty images here 
+
     // TODO: Test the disk free
     for( const auto& disk : status["disks"] ) {
       cout << "Disk Free %: " << (float(disk["free"]) / float(disk["total"]) * 100) << endl;
