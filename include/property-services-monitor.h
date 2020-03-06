@@ -25,7 +25,7 @@
 #endif
 
 #define PTR_MAP_STR_STR std::shared_ptr<std::map<std::string, std::string>>
-#define RESULT_TUPLE std::tuple<std::shared_ptr<std::vector<std::string>>, PTR_MAP_STR_STR>
+#define RESULT_TUPLE std::tuple<std::shared_ptr<std::vector<std::string>>, std::shared_ptr<nlohmann::json>>
 #define MISSING_FIELD "Missing \"{}\" field."
 
 #include "monitor_service.h"

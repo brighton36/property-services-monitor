@@ -26,6 +26,12 @@
         This indicates that the device is powered on, and visible to the network.
       {% else if service.type == "web"  %}
         This indicates that the device is accessible to web browsers.
+      {% else if service.type == "blueiris"  %}
+        This indicates that the security camera DVR is recording and functional.<br />
+        Also, let's do something with these:
+        {% for image in service.results.images %}
+          <img width="228" height="152" src="{{ image_src(image) }}" />
+        {% endfor %}
       {% else %}
         (Unknown Service Type)
       {% endif %}

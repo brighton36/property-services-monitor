@@ -18,12 +18,16 @@ class MonitorServiceBlueIris : public MonitorServiceBase {
     std::string username, password, session;
     std::string capture_from, capture_to, capture_camera;
     MonitorServiceBlueIris(std::string, PTR_MAP_STR_STR);
+    ~MonitorServiceBlueIris();
     RESULT_TUPLE fetchResults();
     static std::string Help();
   private:
+    std::string tmp_dir;
     std::unique_ptr<WebClient> client;
     static ServiceRegister<MonitorServiceBlueIris> reg;
     nlohmann::json sendCommand(std::string, nlohmann::json);
-    std::shared_ptr<std::vector<BlueIrisAlert>> getAlerts(time_t, std::string);
+    std::shared_ptr<std::vector<BlueIrisAlert>> getAlertsCommand(time_t, std::string);
+    std::shared_ptr<std::vector<std::string>> fetchAlertImages();
+    std::string createTempDirectory();
 }; 
 

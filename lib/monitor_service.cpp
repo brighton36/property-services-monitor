@@ -9,7 +9,7 @@ MonitorServiceBase::MonitorServiceBase(string t, string a, PTR_MAP_STR_STR p) {
 }
 
 RESULT_TUPLE MonitorServiceBase::fetchResults() {
-  auto results = make_shared<map<string, string>>();
+  auto results = make_shared<nlohmann::json>();
   auto errors = make_shared<vector<string>>();
 
 	return make_tuple(errors, results);

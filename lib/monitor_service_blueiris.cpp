@@ -47,6 +47,26 @@ MonitorServiceBlueIris::MonitorServiceBlueIris(string address, PTR_MAP_STR_STR p
   client = make_unique<WebClient>(address, port, isSSL);
 }
 
+MonitorServiceBlueIris::~MonitorServiceBlueIris() {
+  if (!tmp_dir.empty()) filesystem::remove_all(tmp_dir);
+}
+
+string MonitorServiceBlueIris::createTempDirectory() {
+  string ret = fmt::format("{}/psm_bi.XXXXXX", string(filesystem::temp_directory_path()));
+
+  char * mkd_cstr = new char[ret.length()+1];
+  strcpy(mkd_cstr, ret.c_str());
+
+  if ( mkdtemp(mkd_cstr) == NULL )
+    throw runtime_error("Error creating temp directory for blue iris downloads");
+
+  ret = string(mkd_cstr);
+
+  delete mkd_cstr;
+
+  return ret;
+}
+
 json MonitorServiceBlueIris::sendCommand(string command, json options = json()) {
   string response;
   unsigned int code;
@@ -102,7 +122,7 @@ json MonitorServiceBlueIris::sendCommand(string command, json options = json()) 
 }
 
 shared_ptr<vector<BlueIrisAlert>> 
-MonitorServiceBlueIris::getAlerts(time_t since = 0, string camera = "Index") {
+MonitorServiceBlueIris::getAlertsCommand(time_t since = 0, string camera = "Index") {
   auto ret = make_shared<vector<BlueIrisAlert>>();
 
   json options = {{"camera", camera}};
@@ -114,6 +134,46 @@ MonitorServiceBlueIris::getAlerts(time_t since = 0, string camera = "Index") {
   for (auto& [i, alert] : alerts.items()) ret->push_back(BlueIrisAlert(alert));
 
   return ret;
+}
+
+shared_ptr<vector<string>> MonitorServiceBlueIris::fetchAlertImages() {
+  auto image_paths = make_shared<vector<string>>();
+
+  // And now let's capture any interesting pictures we can include in our 
+  // report:
+  time_t now = time(nullptr);
+  auto alerts = getAlertsCommand(relative_time_from(now, capture_from), capture_camera);
+  time_t alerts_upto = relative_time_from(now, capture_to);
+
+  alerts->erase( remove_if( alerts->begin(), alerts->end(),
+    [alerts_upto](const BlueIrisAlert & a) { return a.date > alerts_upto; }),
+    alerts->end());
+
+  map<string,string> get_header;
+  get_header["Cookie"] = fmt::format("session={}", session);
+  get_header["Accept"] = "image/webp,image/apng,image/*,*/*;q=0.8";
+
+  for (auto& alert : *alerts) {
+    // Create a temporary directory to work with for our downloads:
+    if (tmp_dir.empty()) tmp_dir = createTempDirectory();
+
+    string tmp_file = fmt::format("{}/{}_{}.jpg", tmp_dir, alert.camera, alert.date);
+
+    auto [code, body] = client->get(alert.pathThumb(), get_header);
+
+    if (code != 200)
+      throw BlueIrisException("Error code {} when attempting to download {}.", 
+        code, alert.pathThumb());
+
+    ofstream outb(tmp_file);
+    outb << body;
+    outb.close();
+
+    // We'll want to return these:
+    image_paths->push_back(tmp_file);
+  }
+
+  return image_paths;
 }
 
 RESULT_TUPLE MonitorServiceBlueIris::fetchResults() {
@@ -134,43 +194,11 @@ RESULT_TUPLE MonitorServiceBlueIris::fetchResults() {
     // TODO: Test the uptime
     cout << "Uptime: " << status["uptime"] << endl;
 
-    // TODO: These should go it its own function:
-    // And now let's capture any interesting pictures we can include in our 
-    // report:
-    time_t now = time(nullptr);
-    auto alerts = getAlerts(relative_time_from(now, capture_from), capture_camera);
-    time_t alerts_upto = relative_time_from(now, capture_to);
+    auto images = fetchAlertImages();
+    for( const auto& i : *images )
+      cout << "Image: " << i << endl;
 
-    alerts->erase( remove_if( alerts->begin(), alerts->end(),
-      [alerts_upto](const BlueIrisAlert & a) { return a.date > alerts_upto; }),
-      alerts->end());
-
-    map<string,string> get_header;
-    get_header["Cookie"] = fmt::format("session={}", session);
-    get_header["Accept"] = "image/webp,image/apng,image/*,*/*;q=0.8";
-
-    for (auto& alert : *alerts) {
-      string tmpbase = tmpnam(nullptr);
-
-      // Jpg:
-      auto [code, body] = client->get(alert.pathThumb(), get_header);
-      // TODO: Test the code == 200
-      ofstream out(fmt::format("{}.jpg", tmpnam(nullptr)));
-      out << body;
-      out.close();
-
-      // WebP:
-      tie(code, body) = client->get(alert.pathClip(), get_header);
-      // TODO: Test the code == 200
-      ofstream outb(fmt::format("{}-smaller.jpg", tmpnam(nullptr)));
-      outb << body;
-      outb.close();
-
-      // TODO: Didn't we have animations?
-
-      cout << "Alert: " << alert.dateAsString("%Y-%m-%d %H:%M") << " " << alert.camera << " "
-        << " Received: " << tmpbase << endl; 
-    }
+    (*results)["images"] = json(*images);
 
   } catch(const exception& e) { 
     cout << "BlueIrisException :" << e.what() << std::endl;
