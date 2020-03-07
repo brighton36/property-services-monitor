@@ -32,6 +32,8 @@
 
 bool pathIsReadable(std::string);
 bool has_any(std::vector<std::string>, std::vector<std::string>);
+unsigned int duration_to_seconds(std::string duration);
+unsigned int percent_string_to_float(std::string duration);
 time_t relative_time_from(time_t, std::string);
 
 template<typename T> std::shared_ptr<MonitorServiceBase> \

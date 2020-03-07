@@ -17,6 +17,9 @@ class MonitorServiceBlueIris : public MonitorServiceBase {
   public:
     std::string username, password, session;
     std::string capture_from, capture_to, capture_camera;
+    unsigned int max_warnings, min_uptime;
+    float min_percent_free;
+
     MonitorServiceBlueIris(std::string, PTR_MAP_STR_STR);
     ~MonitorServiceBlueIris();
     RESULT_TUPLE fetchResults();

@@ -29,9 +29,13 @@
       {% else if service.type == "blueiris"  %}
         This indicates that the security camera DVR is recording and functional.<br />
         Also, let's do something with these:
+        <table>
         {% for image in service.results.images %}
-          <img width="228" height="152" src="{{ image_src(image) }}" />
+          {% if not divisibleBy(loop.index1,2) %}<tr>{% endif %}
+          <td><img src="{{ image_src(image) }}" /></td>
+          {% if divisibleBy(loop.index1,2) or loop.is_last %}</tr>{% endif %}
         {% endfor %}
+        </table>
       {% else %}
         (Unknown Service Type)
       {% endif %}

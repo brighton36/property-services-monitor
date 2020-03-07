@@ -28,6 +28,17 @@ bool pathIsReadable(string path) {
     (perms & filesystem::perms::others_read) != filesystem::perms::none ) );
 }
 
+unsigned int duration_to_seconds(string duration) {
+  // TODO
+  return 0;
+}
+
+unsigned int percent_string_to_float(string duration) {
+
+  // TODO
+  return 0;
+}
+
 time_t relative_time_from(time_t starting_at, string adjustment) {
 	smatch matches;
 

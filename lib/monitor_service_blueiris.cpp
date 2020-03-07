@@ -21,6 +21,9 @@ MonitorServiceBlueIris::MonitorServiceBlueIris(string address, PTR_MAP_STR_STR p
   session = string();
   capture_from = "Yesterday";
   capture_camera = "Index";
+  min_percent_free = 5;
+  max_warnings = 0;
+  min_uptime = 24 * 60 * 60;
 
   setParameters({
     {"port",     [&](string v) { port = stoi(v);}},
@@ -34,9 +37,14 @@ MonitorServiceBlueIris::MonitorServiceBlueIris(string address, PTR_MAP_STR_STR p
       else
         throw invalid_argument(fmt::format("Unrecognized web proto \"{}\".", v));
     } },
-    {"capture_from", [&](string v) { capture_from = v;}},
-    {"capture_to",   [&](string v) { capture_to = v;}},
-    {"capture_camera",   [&](string v) { capture_camera = v;}},
+    {"capture_from",    [&](string v) { capture_from = v;}},
+    {"capture_to",      [&](string v) { capture_to = v;}},
+    {"capture_camera",  [&](string v) { capture_camera = v;}},
+
+    {"max_warnings",   [&](string v) { max_warnings = stoi(v); }},
+    {"min_uptime",   [&](string v) { min_uptime = duration_to_seconds(v); }},
+    {"min_percent_free",   [&](string v) { 
+      min_percent_free = percent_string_to_float(v); } },
   } );
 
   if (username.empty()) throw invalid_argument("Missing required field \"username\".");
@@ -159,6 +167,7 @@ shared_ptr<vector<string>> MonitorServiceBlueIris::fetchAlertImages() {
 
     string tmp_file = fmt::format("{}/{}_{}.jpg", tmp_dir, alert.camera, alert.date);
 
+    // TODO : These pcis are way too big resize()?
     auto [code, body] = client->get(alert.pathThumb(), get_header);
 
     if (code != 200)
@@ -182,18 +191,19 @@ RESULT_TUPLE MonitorServiceBlueIris::fetchResults() {
   try {
     json status = sendCommand("status");
 
-    // TODO :We may want to declare teh empty images here 
-
-    // TODO: Test the disk free
     for( const auto& disk : status["disks"] ) {
-      cout << "Disk Free %: " << (float(disk["free"]) / float(disk["total"]) * 100) << endl;
+      float percent_free = disk["free"].get<float>() / disk["total"].get<float>() * 100;
+
+      if (percent_free < min_percent_free)
+        err(errors, "Less than {0:.1f}% remaining on disk. Only {0:.1f}% Available.", 
+          min_percent_free, percent_free);
     }
 
-    // TODO: Test the warnings 
     unsigned int warnings = stoi(status["warnings"].get<string>());
-    cout << "Warnings: " << warnings << endl;
+    if (warnings > max_warnings)
+      err(errors, "System log returned {} warnings", warnings);
     
-    // TODO: Test the uptime
+    // TODO: Test the uptime: min_uptime
     cout << "Uptime: " << status["uptime"] << endl;
 
     auto images = fetchAlertImages();
