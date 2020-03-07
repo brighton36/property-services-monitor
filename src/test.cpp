@@ -8,6 +8,55 @@ using namespace std;
 
 std::shared_ptr<MonitorServiceFactory::map_type> MonitorServiceFactory::map = nullptr;
 
+
+TEST_CASE("testing function duration_to_seconds()") {
+  unsigned int minute = 60;
+  unsigned int hour = minute * 60;
+  unsigned int day = hour * 24;
+  unsigned int week = day * 7;
+
+  // It gets rough with these measures:
+  unsigned int month = 30 * day;
+  unsigned int year = 365 * day;
+
+  CHECK(duration_to_seconds("1 second") == 1);
+  CHECK(duration_to_seconds("1 minute") == minute);
+  CHECK(duration_to_seconds("1 hour")   == hour);
+  CHECK(duration_to_seconds("1 day")    == day);
+  CHECK(duration_to_seconds("1 week")   == week);
+
+  CHECK(duration_to_seconds("1 minutes") == minute);
+  CHECK(duration_to_seconds("1 hours")   == hour);
+  CHECK(duration_to_seconds("1 days")    == day);
+  CHECK(duration_to_seconds("1 weeks")   == week);
+
+  CHECK(duration_to_seconds("1 month") == month);
+  CHECK(duration_to_seconds("1 year")  == year);
+
+  CHECK(duration_to_seconds("24 hours") == day);
+  CHECK(duration_to_seconds("60 minutes") == hour);
+  CHECK(duration_to_seconds("300 minutes") == 300*minute);
+  CHECK(duration_to_seconds("48 hours") == 2*day);
+
+  CHECK(duration_to_seconds("2 years, 2 days") == 2*year+2*day);
+  CHECK(duration_to_seconds("30 minutes and 1 hour") == 1*hour+30*minute);
+  CHECK(duration_to_seconds("3 weeks, 2 hours, 30 minutes, 10 seconds") == 
+    3*week+2*hour+30*minute+10);
+  CHECK(duration_to_seconds("67") == 67);
+  CHECK(duration_to_seconds("nonsense") == 0);
+}
+
+TEST_CASE("testing function percent_string_to_float()") {
+  CHECK(percent_string_to_float("1%") == 1.0f);
+  CHECK(percent_string_to_float("8%") == 8.0f);
+  CHECK(percent_string_to_float("1 percent") == 1.0f);
+  CHECK(percent_string_to_float("1.5 percent") == 1.5f);
+  CHECK(percent_string_to_float("2.5 percent") == 2.5f);
+  CHECK(percent_string_to_float("95 %") == 95.0f);
+  CHECK(percent_string_to_float("110%") == 110.0f);
+  CHECK(percent_string_to_float("nonsense") == 0.0f);
+}
+
 TEST_CASE("testing function relative_time_from()") {
   time_t e, expected;
   auto str_to_time = [](string time) -> time_t {

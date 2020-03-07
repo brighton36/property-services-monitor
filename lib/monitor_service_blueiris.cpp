@@ -191,6 +191,8 @@ RESULT_TUPLE MonitorServiceBlueIris::fetchResults() {
   try {
     json status = sendCommand("status");
 
+    // TODO : We should probably put this status info into the results...
+
     for( const auto& disk : status["disks"] ) {
       float percent_free = disk["free"].get<float>() / disk["total"].get<float>() * 100;
 

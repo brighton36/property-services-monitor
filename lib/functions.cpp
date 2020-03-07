@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <regex>
 
+#include <iostream> //TODO: Remove
 using namespace std;
 
 bool has_any(vector<string> haystack, vector<string> needles) {
@@ -29,14 +30,36 @@ bool pathIsReadable(string path) {
 }
 
 unsigned int duration_to_seconds(string duration) {
-  // TODO
-  return 0;
+	smatch matches;
+	auto match_num = regex("([\\d]+)[ ]*([a-z]*)");
+  unsigned int ret = 0;
+
+  transform(duration.begin(), duration.end(), duration.begin(), ::tolower); 
+
+	string::const_iterator search_i( duration.cbegin() );
+	while ( regex_search( search_i, duration.cend(), matches, match_num ) ) {
+    unsigned int amount = stoi(matches[1]);
+    string uom = matches[2];
+    
+    if (!uom.compare(0,3,"yea"))      amount *= 365*24*60*60;
+    else if (!uom.compare(0,3,"mon")) amount *= 30*24*60*60;
+    else if (!uom.compare(0,3,"wee")) amount *= 7*24*60*60;
+    else if (!uom.compare(0,3,"day")) amount *= 24*60*60;
+    else if (!uom.compare(0,3,"hou")) amount *= 60*60;
+    else if (!uom.compare(0,3,"min")) amount *= 60;
+
+    ret += amount;
+
+		search_i = matches.suffix().first;
+	}
+
+  return ret;
 }
 
-unsigned int percent_string_to_float(string duration) {
-
-  // TODO
-  return 0;
+float percent_string_to_float(string input) {
+	smatch matches;
+  if (regex_search(input, matches, regex("([\\d\.]+)"))) return stof(matches[1]);
+  return 0.0f;
 }
 
 time_t relative_time_from(time_t starting_at, string adjustment) {
@@ -57,7 +80,7 @@ time_t relative_time_from(time_t starting_at, string adjustment) {
   );
   auto match_num = regex("^[\\d]+$");
 
-  // These are the spin-backward instructions
+  // starting_at is the hand of the clock. These are the spin-backward instructions
   if (regex_search(adjustment, matches, match_day))
     starting_at -= 24 * 60 * 60 * (
       (regex_match(string(matches[1]), match_num)) ? stoi(matches[1]) : 1);
