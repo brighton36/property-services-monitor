@@ -158,3 +158,13 @@ TEST_CASE("testing class BlueIrisAlert()") {
   CHECK(alert2.pathThumb() == "/thumbs/@226540688.bvr");
   CHECK(alert2.pathClip() == "/file/clips/@225022208.bvr?time=0&cache=1&h=240");
 }
+
+TEST_CASE("testing function MonitorServiceBlueIris::uptime_to_seconds()") {
+  unsigned int min = 60;
+  unsigned int hour = 60*60;
+  unsigned int day = 24*60*60;
+
+  CHECK( MonitorServiceBlueIris::uptime_to_seconds("46:23:45:22") == 22+45*min+23*hour+46*day );
+  CHECK( MonitorServiceBlueIris::uptime_to_seconds("00:00:20:00") == 20*min );
+  CHECK( MonitorServiceBlueIris::uptime_to_seconds("00:01:10:00") == 10*min+1*hour );
+}

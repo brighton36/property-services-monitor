@@ -75,6 +75,15 @@ string MonitorServiceBlueIris::createTempDirectory() {
   return ret;
 }
 
+unsigned int MonitorServiceBlueIris::uptime_to_seconds(string input) {
+	smatch matches;
+	auto match_uptime = regex("([\\d]+)\\:([\\d]+)\\:([\\d]+)\\:([\\d]+)");
+
+  return (regex_search(input, matches, match_uptime)) ?
+    ( stoi(matches[4])+stoi(matches[3])*60+stoi(matches[2])*60*60+
+      stoi(matches[1])*60*60*24 ) : 0;
+}
+
 json MonitorServiceBlueIris::sendCommand(string command, json options = json()) {
   string response;
   unsigned int code;
@@ -105,8 +114,8 @@ json MonitorServiceBlueIris::sendCommand(string command, json options = json()) 
     json_response = json::parse(response);
 
     if (json_response["result"] != "success")
-      throw BlueIrisException("Error Result {} in response to authentication request.", 
-        json_response["result"]);
+      throw BlueIrisException("{} with \"{}\" in response to authentication request .", 
+        json_response["result"].get<string>(), json_response["data"]["reason"].get<string>());
 
     // Authentication Suceeded. Set our session code so that we don't authenticate
     // again.
@@ -123,8 +132,8 @@ json MonitorServiceBlueIris::sendCommand(string command, json options = json()) 
     throw BlueIrisException("Error code {} in response to {} command.", code, command);
 
   if (json_response["result"] != "success")
-    throw BlueIrisException("Error Result {} in response to {} command.", 
-      json_response["result"], command);
+    throw BlueIrisException("{} with \"{}\" in response to {} command.", 
+      json_response["result"].get<string>(), json_response["data"]["reason"].get<string>(), command);
 
   return json_response["data"];
 }
@@ -191,32 +200,32 @@ RESULT_TUPLE MonitorServiceBlueIris::fetchResults() {
   try {
     json status = sendCommand("status");
 
-    // TODO : We should probably put this status info into the results...
-
     for( const auto& disk : status["disks"] ) {
       float percent_free = disk["free"].get<float>() / disk["total"].get<float>() * 100;
 
       if (percent_free < min_percent_free)
-        err(errors, "Less than {0:.1f}% remaining on disk. Only {0:.1f}% Available.", 
-          min_percent_free, percent_free);
+        err(errors, "Less than {0:.1f}% remaining on disk.", min_percent_free);
     }
 
     unsigned int warnings = stoi(status["warnings"].get<string>());
     if (warnings > max_warnings)
       err(errors, "System log returned {} warnings", warnings);
     
-    // TODO: Test the uptime: min_uptime
-    cout << "Uptime: " << status["uptime"] << endl;
+    if (uptime_to_seconds(status["uptime"]) < min_uptime)
+      err(errors, 
+        "The system uptime is low, at \"{}\". Seems as if the power was recently cycled", 
+        status["uptime"].get<string>());
 
     auto images = fetchAlertImages();
     for( const auto& i : *images )
       cout << "Image: " << i << endl;
 
     (*results)["images"] = json(*images);
+    (*results)["status"] = status;
 
   } catch(const exception& e) { 
     cout << "BlueIrisException :" << e.what() << std::endl;
-    err(errors, "\"{}\" exception", e.what()); 
+    err(errors, "Encountered {}", e.what()); 
   }
 
 	return make_tuple(errors, results);

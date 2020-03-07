@@ -4,7 +4,6 @@
 #include <filesystem>
 #include <regex>
 
-#include <iostream> //TODO: Remove
 using namespace std;
 
 bool has_any(vector<string> haystack, vector<string> needles) {

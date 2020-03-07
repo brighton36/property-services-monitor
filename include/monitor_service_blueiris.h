@@ -24,6 +24,7 @@ class MonitorServiceBlueIris : public MonitorServiceBase {
     ~MonitorServiceBlueIris();
     RESULT_TUPLE fetchResults();
     static std::string Help();
+    unsigned int static uptime_to_seconds(std::string);
   private:
     std::string tmp_dir;
     std::unique_ptr<WebClient> client;
