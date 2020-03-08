@@ -56,7 +56,8 @@ MonitorServiceBlueIris::MonitorServiceBlueIris(string address, PTR_MAP_STR_STR p
 }
 
 MonitorServiceBlueIris::~MonitorServiceBlueIris() {
-  if (!tmp_dir.empty()) filesystem::remove_all(tmp_dir);
+  // TODO:
+  //if (!tmp_dir.empty()) filesystem::remove_all(tmp_dir);
 }
 
 string MonitorServiceBlueIris::createTempDirectory() {
@@ -148,9 +149,29 @@ MonitorServiceBlueIris::getAlertsCommand(time_t since = 0, string camera = "Inde
 
   json alerts = sendCommand("alertlist", options);
 
-  for (auto& [i, alert] : alerts.items()) ret->push_back(BlueIrisAlert(alert));
+  for (auto& [i, alert] : alerts.items()) 
+    ret->push_back(BlueIrisAlert(alert));
 
   return ret;
+}
+
+json MonitorServiceBlueIris::fetchImage(BlueIrisAlert &alert, string path_dest) { 
+  map<string,string> get_header;
+  get_header["Cookie"] = fmt::format("session={}", session);
+  get_header["Accept"] = "image/webp,image/apng,image/*,*/*;q=0.8";
+
+  // TODO : These pcis are way too big resize()?
+  auto [code, body] = client->get(alert.pathThumb(), get_header);
+
+  if (code != 200) throw BlueIrisException(
+    "Error code {} when attempting to download {}.", code, alert.pathThumb());
+
+  ofstream outb(path_dest);
+  outb << body;
+  outb.close();
+
+  // TODO: Return something with width and height, alt and src
+  return json::object(); 
 }
 
 shared_ptr<vector<string>> MonitorServiceBlueIris::fetchAlertImages() {
@@ -166,26 +187,14 @@ shared_ptr<vector<string>> MonitorServiceBlueIris::fetchAlertImages() {
     [alerts_upto](const BlueIrisAlert & a) { return a.date > alerts_upto; }),
     alerts->end());
 
-  map<string,string> get_header;
-  get_header["Cookie"] = fmt::format("session={}", session);
-  get_header["Accept"] = "image/webp,image/apng,image/*,*/*;q=0.8";
+  // Create a temporary directory to work with for our downloads:
+  if (tmp_dir.empty()) tmp_dir = createTempDirectory();
 
   for (auto& alert : *alerts) {
-    // Create a temporary directory to work with for our downloads:
-    if (tmp_dir.empty()) tmp_dir = createTempDirectory();
-
     string tmp_file = fmt::format("{}/{}_{}.jpg", tmp_dir, alert.camera, alert.date);
 
-    // TODO : These pcis are way too big resize()?
-    auto [code, body] = client->get(alert.pathThumb(), get_header);
-
-    if (code != 200)
-      throw BlueIrisException("Error code {} when attempting to download {}.", 
-        code, alert.pathThumb());
-
-    ofstream outb(tmp_file);
-    outb << body;
-    outb.close();
+    // TODO: Return the json, and store the path internally
+    json image = fetchImage(alert, tmp_file);
 
     // We'll want to return these:
     image_paths->push_back(tmp_file);
@@ -216,6 +225,7 @@ RESULT_TUPLE MonitorServiceBlueIris::fetchResults() {
         "The system uptime is low, at \"{}\". Seems as if the power was recently cycled", 
         status["uptime"].get<string>());
 
+    // TODO: json here putz
     auto images = fetchAlertImages();
     for( const auto& i : *images )
       cout << "Image: " << i << endl;

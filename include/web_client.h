@@ -3,8 +3,6 @@
 #define TUPLE_INT_STR std::tuple<unsigned int, std::string>
 #define MAP_STR_STR std::map<std::string, std::string>
 
-enum WebClientMethod { GET, POST };
-
 class WebClient {
   public:
     std::string address;

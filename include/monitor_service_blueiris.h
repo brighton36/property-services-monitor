@@ -1,6 +1,16 @@
 #include "property-services-monitor.h"
-#include "blue_iris_alert.h"
-#include "web_client.h"
+
+class BlueIrisAlert {
+  public:
+    std::string camera, clip, filesize, resolution, path, res;
+    unsigned int color, flags, newalerts, offset, zones;
+    time_t date;
+
+    BlueIrisAlert(nlohmann::json);
+    std::string dateAsString(std::string);
+    std::string pathThumb();
+    std::string pathClip();
+};
 
 class BlueIrisException : public std::exception {
   public:
@@ -32,6 +42,7 @@ class MonitorServiceBlueIris : public MonitorServiceBase {
     nlohmann::json sendCommand(std::string, nlohmann::json);
     std::shared_ptr<std::vector<BlueIrisAlert>> getAlertsCommand(time_t, std::string);
     std::shared_ptr<std::vector<std::string>> fetchAlertImages();
+    nlohmann::json fetchImage(BlueIrisAlert &, std::string);
     std::string createTempDirectory();
 }; 
 

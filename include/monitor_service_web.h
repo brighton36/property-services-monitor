@@ -1,7 +1,5 @@
 #include "property-services-monitor.h"
 
-#include "web_client.h"
-
 class MonitorServiceWeb : public MonitorServiceBase { 
   public:
     unsigned int port, status_equals;

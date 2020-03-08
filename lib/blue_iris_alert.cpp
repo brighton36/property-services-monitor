@@ -1,4 +1,4 @@
-#include "blue_iris_alert.h"
+#include "monitor_service_blueiris.h"
 
 using namespace nlohmann;
 using namespace std;
@@ -28,10 +28,10 @@ string BlueIrisAlert::dateAsString(string fmt) {
   return string(strf_out);
 }
 
-std::string BlueIrisAlert::pathThumb() { 
+string BlueIrisAlert::pathThumb() { 
   return fmt::format("/thumbs/{}", path);
 }
 
-std::string BlueIrisAlert::pathClip() { 
+string BlueIrisAlert::pathClip() { 
   return fmt::format("/file/clips/{}?time=0&cache=1&h=240", clip);
 }

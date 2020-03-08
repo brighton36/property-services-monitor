@@ -28,14 +28,6 @@
         This indicates that the device is accessible to web browsers.
       {% else if service.type == "blueiris"  %}
         This indicates that the security camera DVR is recording and functional.<br />
-        Also, let's do something with these:
-        <table>
-        {% for image in service.results.images %}
-          {% if not divisibleBy(loop.index1,2) %}<tr>{% endif %}
-          <td><img src="{{ image_src(image) }}" /></td>
-          {% if divisibleBy(loop.index1,2) or loop.is_last %}</tr>{% endif %}
-        {% endfor %}
-        </table>
       {% else %}
         (Unknown Service Type)
       {% endif %}
@@ -48,6 +40,18 @@
       <li class="color-failed">{{ h(failure) }}</li>
       {% endfor %}
     </ul>
+  {% endif %}
+  {% if service.type == "blueiris" %}
+    <p class="indent pad-bottom">
+      Also, let's do something with these:
+      <table>
+      {% for image in service.results.images %}
+        {% if not divisibleBy(loop.index1,2) %}<tr>{% endif %}
+        <td><img src="{{ image_src(image) }}" /></td>
+        {% if divisibleBy(loop.index1,2) or loop.is_last %}</tr>{% endif %}
+      {% endfor %}
+      </table>
+    </p>
   {% endif %}
 {% endfor %}
 {% endfor %}

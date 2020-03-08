@@ -29,6 +29,7 @@
 #define MISSING_FIELD "Missing \"{}\" field."
 
 #include "monitor_service.h"
+#include "web_client.h"
 
 bool pathIsReadable(std::string);
 bool has_any(std::vector<std::string>, std::vector<std::string>);
