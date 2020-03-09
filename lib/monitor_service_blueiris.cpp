@@ -5,6 +5,8 @@
 #include "Poco/MD5Engine.h"
 #include "Poco/DigestStream.h"
 
+#include "GraphicsMagick/Magick++.h"
+
 using namespace std;
 using namespace nlohmann;
 
@@ -53,6 +55,8 @@ MonitorServiceBlueIris::MonitorServiceBlueIris(string address, PTR_MAP_STR_STR p
   if (!port) port = (isSSL) ? 443 : 81;
 
   client = make_unique<WebClient>(address, port, isSSL);
+
+  Magick::InitializeMagick(NULL);
 }
 
 MonitorServiceBlueIris::~MonitorServiceBlueIris() {
@@ -166,16 +170,28 @@ json MonitorServiceBlueIris::fetchImage(BlueIrisAlert &alert, string path_dest) 
   if (code != 200) throw BlueIrisException(
     "Error code {} when attempting to download {}.", code, alert.pathThumb());
 
-  ofstream outb(path_dest);
-  outb << body;
-  outb.close();
+  Magick::Blob blob(static_cast<const void *>(body.c_str()), body.length());
+  Magick::Image image;
+  image.read(blob);
 
-  // TODO: Return something with width and height, alt and src
-  return json::object(); 
+  auto width = image.columns();
+  auto height = image.rows();
+
+  // TODO: Pull this from the config
+  width = width / 4;
+  height = height / 4;
+  image.resize(Magick::Geometry(width, height));
+
+  cout << fmt::format("{}: {}x{}", path_dest, width, height) << endl;
+
+  image.write(path_dest);
+
+  return { {"src", path_dest}, {"width", width}, {"height", height},
+    {"alt", fmt::format("{} {}", alert.camera, alert.dateAsString("%F %r")) } };
 }
 
-shared_ptr<vector<string>> MonitorServiceBlueIris::fetchAlertImages() {
-  auto image_paths = make_shared<vector<string>>();
+json MonitorServiceBlueIris::fetchAlertImages() {
+  auto ret = json::array();
 
   // And now let's capture any interesting pictures we can include in our 
   // report:
@@ -190,17 +206,11 @@ shared_ptr<vector<string>> MonitorServiceBlueIris::fetchAlertImages() {
   // Create a temporary directory to work with for our downloads:
   if (tmp_dir.empty()) tmp_dir = createTempDirectory();
 
-  for (auto& alert : *alerts) {
-    string tmp_file = fmt::format("{}/{}_{}.jpg", tmp_dir, alert.camera, alert.date);
+  for (auto& alert : *alerts)
+    ret.push_back(fetchImage(alert, 
+      fmt::format("{}/{}_{}.jpg", tmp_dir, alert.camera, alert.date)));
 
-    // TODO: Return the json, and store the path internally
-    json image = fetchImage(alert, tmp_file);
-
-    // We'll want to return these:
-    image_paths->push_back(tmp_file);
-  }
-
-  return image_paths;
+  return ret;
 }
 
 RESULT_TUPLE MonitorServiceBlueIris::fetchResults() {
@@ -225,12 +235,7 @@ RESULT_TUPLE MonitorServiceBlueIris::fetchResults() {
         "The system uptime is low, at \"{}\". Seems as if the power was recently cycled", 
         status["uptime"].get<string>());
 
-    // TODO: json here putz
-    auto images = fetchAlertImages();
-    for( const auto& i : *images )
-      cout << "Image: " << i << endl;
-
-    (*results)["images"] = json(*images);
+    (*results)["images"] = fetchAlertImages();
     (*results)["status"] = status;
 
   } catch(const exception& e) { 

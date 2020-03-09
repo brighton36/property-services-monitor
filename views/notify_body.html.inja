@@ -47,7 +47,7 @@
       <table>
       {% for image in service.results.images %}
         {% if not divisibleBy(loop.index1,2) %}<tr>{% endif %}
-        <td><img src="{{ image_src(image) }}" /></td>
+        <td><img width="{{image.width}}" height="{{image.height}}" alt="{{image.alt}}" src="{{ image_src(image.src) }}" /></td>
         {% if divisibleBy(loop.index1,2) or loop.is_last %}</tr>{% endif %}
       {% endfor %}
       </table>

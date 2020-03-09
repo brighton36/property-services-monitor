@@ -21,8 +21,9 @@ endif
 
 # flags #
 CXXFLAGS := $(CXXFLAGS) -std=c++17 -Wall -Wextra -DPREFIX=\"$(prefix)\" # -g 
-INCLUDES = -I./include/ 
-SHARED_LIBS = -lfmt -lyaml-cpp -lPocoNet -lPocoNetSSL -lPocoFoundation -lPocoCrypto -lstdc++fs
+INCLUDES = -I./include/ -I/usr/include/GraphicsMagick/
+SHARED_LIBS = -lfmt -lyaml-cpp -lPocoNet -lPocoNetSSL -lPocoFoundation \
+	-lPocoCrypto -lstdc++fs -lGraphicsMagick++
 
 .PHONY: default_target
 default_target: release

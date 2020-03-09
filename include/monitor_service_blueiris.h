@@ -41,7 +41,7 @@ class MonitorServiceBlueIris : public MonitorServiceBase {
     static ServiceRegister<MonitorServiceBlueIris> reg;
     nlohmann::json sendCommand(std::string, nlohmann::json);
     std::shared_ptr<std::vector<BlueIrisAlert>> getAlertsCommand(time_t, std::string);
-    std::shared_ptr<std::vector<std::string>> fetchAlertImages();
+    nlohmann::json fetchAlertImages();
     nlohmann::json fetchImage(BlueIrisAlert &, std::string);
     std::string createTempDirectory();
 }; 
