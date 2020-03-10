@@ -43,9 +43,9 @@ MonitorServiceBlueIris::MonitorServiceBlueIris(string address, PTR_MAP_STR_STR p
     {"capture_to",      [&](string v) { capture_to = v;}},
     {"capture_camera",  [&](string v) { capture_camera = v;}},
 
-    {"max_warnings",   [&](string v) { max_warnings = stoi(v); }},
-    {"min_uptime",   [&](string v) { min_uptime = duration_to_seconds(v); }},
-    {"min_percent_free",   [&](string v) { 
+    {"max_warnings",     [&](string v) { max_warnings = stoi(v); }},
+    {"min_uptime",       [&](string v) { min_uptime = duration_to_seconds(v); }},
+    {"min_percent_free", [&](string v) { 
       min_percent_free = percent_string_to_float(v); } },
   } );
 
@@ -81,8 +81,8 @@ string MonitorServiceBlueIris::createTempDirectory() {
 }
 
 unsigned int MonitorServiceBlueIris::uptime_to_seconds(string input) {
-	smatch matches;
-	auto match_uptime = regex("([\\d]+)\\:([\\d]+)\\:([\\d]+)\\:([\\d]+)");
+  smatch matches;
+  auto match_uptime = regex("([\\d]+)\\:([\\d]+)\\:([\\d]+)\\:([\\d]+)");
 
   return (regex_search(input, matches, match_uptime)) ?
     ( stoi(matches[4])+stoi(matches[3])*60+stoi(matches[2])*60*60+
@@ -164,7 +164,6 @@ json MonitorServiceBlueIris::fetchImage(BlueIrisAlert &alert, string path_dest) 
   get_header["Cookie"] = fmt::format("session={}", session);
   get_header["Accept"] = "image/webp,image/apng,image/*,*/*;q=0.8";
 
-  // TODO : These pcis are way too big resize()?
   auto [code, body] = client->get(alert.pathThumb(), get_header);
 
   if (code != 200) throw BlueIrisException(
@@ -185,6 +184,8 @@ json MonitorServiceBlueIris::fetchImage(BlueIrisAlert &alert, string path_dest) 
   cout << fmt::format("{}: {}x{}", path_dest, width, height) << endl;
 
   image.write(path_dest);
+
+  // TODO: Test this: https://github.com/webmproject/libwebp/blob/master/examples/img2webp.c
 
   return { {"src", path_dest}, {"width", width}, {"height", height},
     {"alt", fmt::format("{} {}", alert.camera, alert.dateAsString("%F %r")) } };
@@ -243,5 +244,5 @@ RESULT_TUPLE MonitorServiceBlueIris::fetchResults() {
     err(errors, "Encountered {}", e.what()); 
   }
 
-	return make_tuple(errors, results);
+  return make_tuple(errors, results);
 }
