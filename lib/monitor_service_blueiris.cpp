@@ -7,69 +7,10 @@
 
 #include "GraphicsMagick/Magick++.h"
 
-
-#include "webp/encode.h"
-#include "webp/mux.h"
-#include "imageio/image_dec.h"
-#include "imageio/imageio_util.h"
-
-
 using namespace std;
 using namespace nlohmann;
 
 ServiceRegister<MonitorServiceBlueIris> MonitorServiceBlueIris::reg("blueiris");
-
-static int ReadImage(const char filename[], WebPPicture* const pic) {
-  const uint8_t* data = NULL;
-  size_t data_size = 0;
-  WebPImageReader reader;
-  int ok;
-#ifdef HAVE_WINCODEC_H
-  // Try to decode the file using WIC falling back to the other readers for
-  // e.g., WebP.
-  ok = ReadPictureWithWIC(filename, pic, 1, NULL);
-  if (ok) return 1;
-#endif
-  if (!ImgIoUtilReadFile(filename, &data, &data_size)) return 0;
-  reader = WebPGuessImageReader(data, data_size);
-  ok = reader(data, data_size, pic, 1, NULL);
-  free((void*)data);
-  return ok;
-}
-
-static int SetLoopCount(int loop_count, WebPData* const webp_data) {
-  int ok = 1;
-  WebPMuxError err;
-  uint32_t features;
-  WebPMuxAnimParams new_params;
-  WebPMux* const mux = WebPMuxCreate(webp_data, 1);
-  if (mux == NULL) return 0;
-
-  err = WebPMuxGetFeatures(mux, &features);
-  ok = (err == WEBP_MUX_OK);
-  if (!ok || !(features & ANIMATION_FLAG)) goto End;
-
-  err = WebPMuxGetAnimationParams(mux, &new_params);
-  ok = (err == WEBP_MUX_OK);
-  if (ok) {
-    new_params.loop_count = loop_count;
-    err = WebPMuxSetAnimationParams(mux, &new_params);
-    ok = (err == WEBP_MUX_OK);
-  }
-  if (ok) {
-    WebPDataClear(webp_data);
-    err = WebPMuxAssemble(mux, webp_data);
-    ok = (err == WEBP_MUX_OK);
-  }
-
- End:
-  WebPMuxDelete(mux);
-  if (!ok) {
-    fprintf(stderr, "Error during loop-count setting\n");
-  }
-  return ok;
-}
-
 
 std::string MonitorServiceBlueIris::Help() { 
   return "TODO";
@@ -223,110 +164,33 @@ json MonitorServiceBlueIris::fetchImage(BlueIrisAlert &alert, string tmp_dir) {
   get_header["Cookie"] = fmt::format("session={}", session);
   get_header["Accept"] = "image/webp,image/apng,image/*,*/*;q=0.8";
 
-  vector<string> frames;
-  int width, height;
-  for (unsigned int i = 0; i<5; i++) {
+  string clip_source = alert.pathThumb();
 
-    string clip_source = alert.pathClip(3125*i);
+  // TODO: Pull from config : time intervals of 3125... is there a ceil on this, per video?
+  auto [code, body] = client->get(clip_source, get_header);
 
-    // TODO: Pull from config : time intervals of 3125... is there a ceil on this, per video?
-    auto [code, body] = client->get(clip_source, get_header);
+  if (code != 200) throw BlueIrisException(
+    "Error code {} when attempting to download {}.", code, clip_source);
 
-    if (code != 200) throw BlueIrisException(
-      "Error code {} when attempting to download {}.", code, clip_source);
+  Magick::Blob blob(static_cast<const void *>(body.c_str()), body.length());
+  Magick::Image image;
+  image.read(blob);
 
-    Magick::Blob blob(static_cast<const void *>(body.c_str()), body.length());
-    Magick::Image image;
-    image.read(blob);
+  unsigned int width = image.columns();
+  unsigned int height = image.rows();
 
-    width = image.columns();
-    height = image.rows();
+  // TODO: Pull this from the config
+  width = width / 2;
+  height = height / 2;
+  image.resize(Magick::Geometry(width, height));
 
-    // TODO: Pull this from the config
-    /*
-    width = width / 2;
-    height = height / 2;
-    image.resize(Magick::Geometry(width, height));
-    */
+  string path_dest = fmt::format("{}/{}_{}.jpg", tmp_dir, alert.camera, alert.date);
 
-    string path_dest = fmt::format("{}/{}_{}-{}.jpg", tmp_dir, alert.camera, alert.date, i);
+  cout << fmt::format("{}: {}x{}", path_dest, width, height) << endl;
 
-    cout << fmt::format("{}: {}x{}", path_dest, width, height) << endl;
+  image.write(path_dest);
 
-    image.write(path_dest);
-    frames.push_back(path_dest);
-  }
-
-
-//////////////////////////////////////////////////////////
-  WebPConfig config;
-  WebPAnimEncoderOptions anim_config;
-  WebPAnimEncoder* enc = NULL;
-  WebPData webp_data;
-  WebPPicture pic;
-  int duration = 100;
-  int timestamp_ms = 0;
-  int loop_count = 0;
-
-  WebPDataInit(&webp_data);
-
-  if (!WebPAnimEncoderOptionsInit(&anim_config)) cout << "Error: WebPAnimEncoderOptionsInit" << endl;
-  if (!WebPConfigInit(&config)) cout << "Error: WebPConfigInit" << endl;
-  if (!WebPPictureInit(&pic)) cout << "Error: WebPPictureInit" << endl;
-
-  int pic_num = 0;
-  config.lossless = 0;
-
-  if (!WebPValidateConfig(&config)) cout << "Error: WebPValidateConfig" << endl;
-
-  for( const auto& frame_path : frames ) {
-    pic.use_argb = 1;
-    if (!ReadImage(frame_path.c_str(), &pic)) cout << "Error ReadImage" << endl;
-
-    if (enc == NULL) {
-      width  = pic.width;
-      height = pic.height;
-      enc = WebPAnimEncoderNew(width, height, &anim_config);
-      if (enc == NULL) {
-        fprintf(stderr, "Could not create WebPAnimEncoder object.\n");
-      }
-    }
-    
-    if (!(width == pic.width && height == pic.height)) {
-      fprintf(stderr, "Frame #%d dimension mismatched! "
-                      "Got %d x %d. Was expecting %d x %d.\n",
-              pic_num, pic.width, pic.height, width, height);
-    }
-
-    if (!WebPAnimEncoderAdd(enc, &pic, timestamp_ms, &config)) {
-      fprintf(stderr, "Error while adding frame #%d\n", pic_num);
-    }
-
-    WebPPictureFree(&pic);
-
-    timestamp_ms += duration;
-    ++pic_num;
-  }
-
-  // add a last fake frame to signal the last duration
-  if (!WebPAnimEncoderAdd(enc, NULL, timestamp_ms, NULL)) cout << "WebPAnimEncoderAdd fail" << endl;
-  if (!WebPAnimEncoderAssemble(enc, &webp_data)) cout << "WebPAnimEncoderAssemble fail" << endl;
-
-  WebPAnimEncoderDelete(enc);
-
-  if (loop_count > 0) 
-    if (!SetLoopCount(loop_count, &webp_data)) cout << "SetLoopCount fail" << endl;
-
-  string webp_dest = fmt::format("{}/{}_{}.webp", tmp_dir, alert.camera, alert.date);
-
-  if (!ImgIoUtilWriteFile(webp_dest.c_str(), webp_data.bytes, webp_data.size)) 
-    cout << "ImgIoUtilWriteFile fail" << endl;
-
-  cout << "Webp: {}" << webp_dest << " size: " << webp_data.size << endl;
-
-//////////////////////////////////////////////////////////
-
-  return { {"src", webp_dest}, {"width", width}, {"height", height},
+  return { {"src", path_dest}, {"width", width}, {"height", height},
     {"alt", fmt::format("{} {}", alert.camera, alert.dateAsString("%F %r")) } };
 }
 
