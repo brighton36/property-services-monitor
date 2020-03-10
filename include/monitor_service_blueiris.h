@@ -9,7 +9,7 @@ class BlueIrisAlert {
     BlueIrisAlert(nlohmann::json);
     std::string dateAsString(std::string);
     std::string pathThumb();
-    std::string pathClip();
+    std::string pathClip(unsigned int);
 };
 
 class BlueIrisException : public std::exception {

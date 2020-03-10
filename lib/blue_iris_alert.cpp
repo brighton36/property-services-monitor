@@ -32,6 +32,6 @@ string BlueIrisAlert::pathThumb() {
   return fmt::format("/thumbs/{}", path);
 }
 
-string BlueIrisAlert::pathClip() { 
-  return fmt::format("/file/clips/{}?time=0&cache=1&h=240", clip);
+string BlueIrisAlert::pathClip(unsigned int time = 0) { 
+  return fmt::format("/file/clips/{}?time={}&cache=1&h=240", clip, time);
 }
