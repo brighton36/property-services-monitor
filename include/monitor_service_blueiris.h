@@ -44,5 +44,6 @@ class MonitorServiceBlueIris : public MonitorServiceBase {
     nlohmann::json fetchAlertImages();
     nlohmann::json fetchImage(BlueIrisAlert &, std::string);
     std::string createTempDirectory();
+    std::tuple<unsigned int, unsigned int> imageDimensions(const char *, unsigned int);
 }; 
 

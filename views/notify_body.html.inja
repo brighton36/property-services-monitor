@@ -44,13 +44,14 @@
   {% if service.type == "blueiris" %}
     <p class="indent pad-bottom">
       Also, let's do something with these:
-      <table>
+      <div class="image-gallery">
+      <ul>
       {% for image in service.results.images %}
-        {% if not divisibleBy(loop.index1,2) %}<tr>{% endif %}
-        <td><img width="{{image.width}}" height="{{image.height}}" alt="{{image.alt}}" src="{{ image_src(image.src) }}" /></td>
-        {% if divisibleBy(loop.index1,2) or loop.is_last %}</tr>{% endif %}
+        <li><img width="{{image.width}}" height="{{image.height}}" 
+          alt="{{image.alt}}" src="{{ image_src(image.src) }}" /></li>
       {% endfor %}
-      </table>
+      </ul>
+      </div>
     </p>
   {% endif %}
 {% endfor %}

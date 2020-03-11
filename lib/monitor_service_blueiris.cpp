@@ -5,8 +5,6 @@
 #include "Poco/MD5Engine.h"
 #include "Poco/DigestStream.h"
 
-#include "GraphicsMagick/Magick++.h"
-
 using namespace std;
 using namespace nlohmann;
 
@@ -39,9 +37,9 @@ MonitorServiceBlueIris::MonitorServiceBlueIris(string address, PTR_MAP_STR_STR p
       else
         throw invalid_argument(fmt::format("Unrecognized web proto \"{}\".", v));
     } },
-    {"capture_from",    [&](string v) { capture_from = v;}},
-    {"capture_to",      [&](string v) { capture_to = v;}},
-    {"capture_camera",  [&](string v) { capture_camera = v;}},
+    {"capture_from",    [&](string v)  { capture_from = v;}},
+    {"capture_to",      [&](string v)  { capture_to = v;}},
+    {"capture_camera",  [&](string v)  { capture_camera = v;}},
 
     {"max_warnings",     [&](string v) { max_warnings = stoi(v); }},
     {"min_uptime",       [&](string v) { min_uptime = duration_to_seconds(v); }},
@@ -55,13 +53,10 @@ MonitorServiceBlueIris::MonitorServiceBlueIris(string address, PTR_MAP_STR_STR p
   if (!port) port = (isSSL) ? 443 : 81;
 
   client = make_unique<WebClient>(address, port, isSSL);
-
-  Magick::InitializeMagick(NULL);
 }
 
 MonitorServiceBlueIris::~MonitorServiceBlueIris() {
-  // TODO:
-  //if (!tmp_dir.empty()) filesystem::remove_all(tmp_dir);
+	//if (!tmp_dir.empty()) filesystem::remove_all(tmp_dir);
 }
 
 string MonitorServiceBlueIris::createTempDirectory() {
@@ -159,36 +154,57 @@ MonitorServiceBlueIris::getAlertsCommand(time_t since = 0, string camera = "Inde
   return ret;
 }
 
+// I grabbed and modified this from : http://www.wischik.com/lu/programmer/get-image-size.html
+tuple<unsigned int, unsigned int> 
+MonitorServiceBlueIris::imageDimensions(const char *image, unsigned int length) {
+  if (length<24) throw BlueIrisException("Invalid jpeg file.");
+
+  unsigned char buf[24]; 
+  if (!memcpy(buf, image, 24))
+    throw BlueIrisException("Unable to process jpeg file.");
+
+  // For JPEGs, we need to read the first 12 bytes of each chunk.
+  // We'll read those 12 bytes at buf+2...buf+14, i.e. overwriting the existing buf.
+  if (buf[0]==0xFF && buf[1]==0xD8 && buf[2]==0xFF && buf[3]==0xE0 && 
+		buf[6]=='J' && buf[7]=='F' && buf[8]=='I' && buf[9]=='F') { 
+		long pos=2;
+    while (buf[2]==0xFF) { 
+			if (buf[3]==0xC0 || buf[3]==0xC1 || buf[3]==0xC2 || buf[3]==0xC3 || 
+				buf[3]==0xC9 || buf[3]==0xCA || buf[3]==0xCB) 
+				break;
+
+      pos += 2+(buf[4]<<8)+buf[5];
+
+      if (pos+12>length) break;
+
+      if(!memcpy(buf+2, image+pos, 12))
+        throw BlueIrisException("Unable to process jpeg file.");
+    }
+  }
+
+  // JPEG: (first two bytes of buf are first two bytes of the jpeg file; rest of 
+  // buf is the DCT frame
+  if (buf[0]==0xFF && buf[1]==0xD8 && buf[2]==0xFF)
+    return make_tuple((buf[9]<<8) + buf[10], (buf[7]<<8) + buf[8]);
+
+  throw BlueIrisException("Unable to ascertain dimensions of jpg file.");
+}
+
 json MonitorServiceBlueIris::fetchImage(BlueIrisAlert &alert, string tmp_dir) { 
-  map<string,string> get_header;
-  get_header["Cookie"] = fmt::format("session={}", session);
-  get_header["Accept"] = "image/webp,image/apng,image/*,*/*;q=0.8";
-
-  string clip_source = alert.pathThumb();
-
-  // TODO: Pull from config : time intervals of 3125... is there a ceil on this, per video?
-  auto [code, body] = client->get(clip_source, get_header);
-
-  if (code != 200) throw BlueIrisException(
-    "Error code {} when attempting to download {}.", code, clip_source);
-
-  Magick::Blob blob(static_cast<const void *>(body.c_str()), body.length());
-  Magick::Image image;
-  image.read(blob);
-
-  unsigned int width = image.columns();
-  unsigned int height = image.rows();
-
-  // TODO: Pull this from the config
-  width = width / 2;
-  height = height / 2;
-  image.resize(Magick::Geometry(width, height));
-
   string path_dest = fmt::format("{}/{}_{}.jpg", tmp_dir, alert.camera, alert.date);
 
-  cout << fmt::format("{}: {}x{}", path_dest, width, height) << endl;
+  auto [code, body] = client->get(alert.pathThumb(), {
+    {"Cookie", fmt::format("session={}", session)},
+    {"Accept", "image/webp,image/apng,image/*,*/*;q=0.8"} });
 
-  image.write(path_dest);
+  if (code != 200) throw BlueIrisException(
+    "Error code {} when attempting to download {}.", code, alert.pathThumb());
+
+    auto [width, height] = imageDimensions(body.c_str(), body.length());
+
+    ofstream outb(path_dest);
+    outb << body;
+    outb.close();
 
   return { {"src", path_dest}, {"width", width}, {"height", height},
     {"alt", fmt::format("{} {}", alert.camera, alert.dateAsString("%F %r")) } };
@@ -210,8 +226,9 @@ json MonitorServiceBlueIris::fetchAlertImages() {
   // Create a temporary directory to work with for our downloads:
   if (tmp_dir.empty()) tmp_dir = createTempDirectory();
 
-  for (auto& alert : *alerts)
-    ret.push_back(fetchImage(alert, tmp_dir));
+  reverse(alerts->begin(),alerts->end());
+
+  for (auto& alert : *alerts) ret.push_back(fetchImage(alert, tmp_dir));
 
   return ret;
 }
@@ -242,7 +259,6 @@ RESULT_TUPLE MonitorServiceBlueIris::fetchResults() {
     (*results)["status"] = status;
 
   } catch(const exception& e) { 
-    cout << "BlueIrisException :" << e.what() << std::endl;
     err(errors, "Encountered {}", e.what()); 
   }
 

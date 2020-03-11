@@ -135,7 +135,7 @@ TEST_CASE("testing class BlueIrisAlert()") {
 
   CHECK(alert1.dateAsString("%F %r") == "2020-03-03 10:26:41 AM");
   CHECK(alert1.pathThumb() == "/thumbs/@300598614.bvr");
-  CHECK(alert1.pathClip() == "/file/clips/@299856758.bvr?time=0&cache=1&h=240");
+  CHECK(alert1.pathClip(0) == "/file/clips/@299856758.bvr?time=0&cache=1&h=240");
 
   BlueIrisAlert alert2 = BlueIrisAlert(
     "{\"camera\":\"LotSouth\",\"clip\":\"@225022208.bvr\",\"color\":8151097,\"d"
@@ -156,7 +156,7 @@ TEST_CASE("testing class BlueIrisAlert()") {
 
   CHECK(alert2.dateAsString("%F %r") == "2020-03-01 05:17:51 PM");
   CHECK(alert2.pathThumb() == "/thumbs/@226540688.bvr");
-  CHECK(alert2.pathClip() == "/file/clips/@225022208.bvr?time=0&cache=1&h=240");
+  CHECK(alert2.pathClip(0) == "/file/clips/@225022208.bvr?time=0&cache=1&h=240");
 }
 
 TEST_CASE("testing function MonitorServiceBlueIris::uptime_to_seconds()") {

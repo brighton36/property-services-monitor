@@ -4,16 +4,16 @@ using namespace nlohmann;
 using namespace std;
 
 BlueIrisAlert::BlueIrisAlert(json from) {
-	camera    = from["camera"];
-	clip      = from["clip"];
-	color     = from["color"];
-	filesize  = from["filesize"];
-	flags     = from["flags"];
+  camera    = from["camera"];
+  clip      = from["clip"];
+  color     = from["color"];
+  filesize  = from["filesize"];
+  flags     = from["flags"];
   newalerts = from.value("newalerts", 0);
-	offset    = from["offset"];
-	path      = from["path"];
-	res       = from["res"];
-	zones     = from["zones"];
+  offset    = from["offset"];
+  path      = from["path"];
+  res       = from["res"];
+  zones     = from["zones"];
 
   // NOTE: I'm ignoring zones here. Which, seems to work as expected as long as
   // "we" are in the same zone as the server we're querying. 
