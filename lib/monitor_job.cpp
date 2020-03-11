@@ -74,12 +74,16 @@ nlohmann::json MonitorJob::toJson() {
 
   for (const auto host: hosts) {
     auto js_services = nlohmann::json::array();
+    bool host_has_failures = false;
 
     for(const auto service: host->services) {
       auto [errors, results] = service->fetchResults();
       bool is_up = errors->empty();
 
-      if (!is_up) ret["has_failures"] = true;
+      if (!is_up) {
+        ret["has_failures"] = true;
+        host_has_failures = true;
+      }
 
       js_services.push_back({
         {"failures",  nlohmann::json(*errors)},
@@ -90,10 +94,11 @@ nlohmann::json MonitorJob::toJson() {
     }
 
     ret["hosts"].push_back({
-      {"label",       host->label},
-      {"description", host->description},
-      {"address",     host->address},
-      {"services",    js_services}
+      {"has_failures", host_has_failures},
+      {"label",        host->label},
+      {"description",  host->description},
+      {"address",      host->address},
+      {"services",     js_services}
     });
   }
 

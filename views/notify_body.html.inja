@@ -16,10 +16,16 @@
 </table>
 
 {% for host in hosts %}
-<h2><a class="nolink">{{ h(host.label) }}</a></h2>
-<p class='pad-bottom'>{{ h(host.description) }}</p>
+<h2{% if host.has_failures %} class="color-failed"{% endif %}>{{ h(host.label) }}</h2>
+<p class="pad-bottom{% if host.has_failures %} color-failed{% endif %}">
+  {{ h(host.description) }}
+  {% if default(report_detailed_success, false) == false and host.has_failures == false%}
+  <br />All monitored services on this host are <span class="color-passed strong">Online/Functional</span>.
+  {% endif %}
+</p>
 {% for service in host.services %}
   {% if service.is_up %}
+    {% if default(report_detailed_success, false) %}
     <p class="color-passed strong indent">{{ h(service.type) }}: Online/Functional.</li>
     <p class="indent pad-bottom">
       {% if service.type == "ping" %}
@@ -32,6 +38,7 @@
         (Unknown Service Type)
       {% endif %}
     </p>
+    {% endif %}
   {% else %}
     <p class="color-failed strong indent">{{ h(service.type) }}: Errors Encountered.</li>
     <p class="color-failed indent">Error(s) were found while scanning &quot;{{ h(host.address)}}&quot;</p>
@@ -42,17 +49,22 @@
     </ul>
   {% endif %}
   {% if service.type == "blueiris" %}
-    <p class="indent pad-bottom">
-      Also, let's do something with these:
-      <div class="image-gallery">
+    {% if length(service.results.images) > 0 %}
+    <p class="pad-bottom">
+      The following alerts were captured, since our last run:
+      <div class="image-gallery pad-bottom">
       <ul>
       {% for image in service.results.images %}
-        <li><img width="{{image.width}}" height="{{image.height}}" 
+        <li><img width="{{mul(image.width, default(thumbnail_scale,0.25))}}" 
+          height="{{mul(image.height, default(thumbnail_scale,0.25))}}" 
           alt="{{image.alt}}" src="{{ image_src(image.src) }}" /></li>
       {% endfor %}
       </ul>
       </div>
     </p>
+    {% else %}
+    <p class="pad-bottom">No alerts were captured, since our last run.
+    {% endif %}
   {% endif %}
 {% endfor %}
 {% endfor %}

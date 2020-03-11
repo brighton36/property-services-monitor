@@ -7,31 +7,31 @@
       font-family:'Google Sans',Roboto,RobotoDraft,Helvetica; 
       font-size:14px; 
       line-height:18px; 
-      font-color:{{default(text_color, "#0D1B1E")}};
+      color:{{default(text_color, "#383838")}};
     }
 
     h1 { 
       display: block;
       margin: 0 0 0 0;
-      font-color:{{default(text_color, "#0D1B1E")}};
+      color:{{default(text_color, "#383838")}};
     }
 
     h2 { 
       display: block;
       margin: 0 0 0 0;
-      font-color:{{default(text_color, "#0D1B1E")}};
+      color:{{default(text_color, "#383838")}};
     }
 
     h3 { 
       display: block;
       margin: 0.8em 0 0 0;
-      font-color:{{default(text_color, "#0D1B1E")}};
+      color:{{default(text_color, "#383838")}};
     }
 
     h4 { 
       font-size:16px; 
       line-height:28px; 
-      font-color:{{default(text_color, "#0D1B1E")}};
+      color:{{default(text_color, "#383838")}};
       display: block;
       margin: 0.8em 0 0 0;
       padding: 0;
@@ -49,6 +49,9 @@
       padding: 0;
     }
 
+    img {
+      border: 1px solid {{default(border_color, "#7798AB")}};
+    }
 
     .color-passed { color: {{default(pass_color, "#3F5C53")}}; }
     .color-failed { color: {{default(fail_color, "#802829")}}; }
@@ -62,7 +65,7 @@
 
     /* This fixes the gmail blue-color auto-linking ... feature. */
     .nolink { 
-      color:{{default(text_color, "#0D1B1E")}}!important; 
+      color:{{default(text_color, "#444444")}}!important; 
       text-decoration:none!important;
     }
     
@@ -73,6 +76,7 @@
     }
 
     .image-gallery li {
+      margin: 0; padding: 0 4px 0 0; 
       display: inline;
     }
 

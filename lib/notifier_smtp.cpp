@@ -216,6 +216,13 @@ unique_ptr<inja::Environment> NotifierSmtp::getInjaEnv() {
 
     return fmt::format("cid:{}", attachment.getContentID());
   });
+
+  env->add_callback("mul", 2, [&](inja::Arguments& args) {
+    auto a = args.at(0)->get<float>();
+    auto b = args.at(1)->get<float>();
+
+    return (int) round(a * b);
+  });
   
   return env;
 }
