@@ -31,7 +31,7 @@ details.
 ## Compilation
 If compiling on Debian systems, the following packages are required:
 ```
-sudo apt install build-essential libfmt-dev libyaml-cpp-dev libpoco-dev
+sudo apt install build-essential libfmt-dev libyaml-cpp-dev libpoco-dev nlohmann-json3-dev doctest-dev
 ```
 Compilation is as simple as :
 ```
@@ -70,6 +70,16 @@ Note:
    own templates, just add them to this section of the config, and they will be
    mirrored onto the template at the time of rendering.
  - Relative Image paths are expected to be relative to the inja file itself.
+
+## CHANGELOG
+
+#### [Version 0.2](https://github.com/brighton36/property-services-monitor/releases/tag/0.2) (Date-todo)
+- Added "Blue Iris" Service monitoring module.
+- Incorporated DVR image attachment support and presentation to the report email.
+- Implemented preliminary "make test" target with doctest.
+
+#### [Version 0.1](https://github.com/brighton36/property-services-monitor/releases/tag/0.1) (2020-02-29)
+- First Production Release.
 
 ## Program help Output
 Additional details on the types of services that are supported, and what options
