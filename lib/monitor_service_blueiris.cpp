@@ -11,7 +11,32 @@ using namespace nlohmann;
 ServiceRegister<MonitorServiceBlueIris> MonitorServiceBlueIris::reg("blueiris");
 
 std::string MonitorServiceBlueIris::Help() { 
-  return "TODO";
+  return 
+    " * username         (required) A username for use in logging into the blue iris web service.\n"
+    " * password         (required) A password for use in logging into the blue iris web service.\n"
+    " * proto            (optional) Either \"http\" or \"https\". Defaults to \"http\".\n"
+    " * port             (optional) The port number of the http service. Defaults to 80 (http) or\n"
+    "                             443 (https), depending on the proto value.\n"
+    " * capture_camera   (optional) Which camera(s) to capture alert images from, for inclusion\n"
+    "                               in our report. Defaults to \"Index\" (Include All cameras).\n"
+    " * capture_from     (optional) A human readable DATETIME, indicating what time and day will\n"
+    "                               start our alert image capturing. This is used to download\n"
+    "                               and attach images to our report. See the notes on DATETIME\n"
+    "                               formatting further below. Defaults to \"Yesterday\".\n"
+    " * capture_to       (optional) A human readable DATETIME, indicating what time and day will\n"
+    "                               end our alert image capturing. This is used to download\n"
+    "                               and attach images to our report. See the notes on DATETIME\n"
+    "                               formatting further below. Defaults to \"now\".\n"
+    " * max_warnings     (optional) Warnings are returned by the \"status\" command, to the \n"
+    "                               blue iris server. This is the count threshold, above which\n"
+    "                               we trigger failure. Defaults to 0.\n"
+    " * min_uptime       (optional) The minimum acceptable system uptime for this server. This\n"
+    "                               parameter is expected to be provided in the DURATION format.\n"
+    "                               For more details on the DURATION format, see below. Defaults\n"
+    "                               to \"1 day\".\n"
+    " * min_percent_free (optional) The minimum amount of space required on the system hard disk(s)\n"
+    "                               in order to pass this check. This test is applied to every drive\n"
+    "                               installed in the system. Defaults to \"5%\".\n";
 }
 
 MonitorServiceBlueIris::MonitorServiceBlueIris(string address, PTR_MAP_STR_STR params) 
@@ -37,9 +62,9 @@ MonitorServiceBlueIris::MonitorServiceBlueIris(string address, PTR_MAP_STR_STR p
       else
         throw invalid_argument(fmt::format("Unrecognized web proto \"{}\".", v));
     } },
+    {"capture_camera",  [&](string v)  { capture_camera = v;}},
     {"capture_from",    [&](string v)  { capture_from = v;}},
     {"capture_to",      [&](string v)  { capture_to = v;}},
-    {"capture_camera",  [&](string v)  { capture_camera = v;}},
 
     {"max_warnings",     [&](string v) { max_warnings = stoi(v); }},
     {"min_uptime",       [&](string v) { min_uptime = duration_to_seconds(v); }},

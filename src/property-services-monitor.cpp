@@ -36,27 +36,40 @@ int main(int argc, char* argv[]) {
     );
 
     auto services = MonitorServiceFactory::getRegistrations();
-  
-    string services_joined = accumulate( next(services.begin()), services.end(), 
-      services[0], [](string a, string b) { return fmt::format("\"{}\", \"{}\"",a,b);} );
+    string services_joined = fmt::format("\"{}\"", services[0]);
+    for( unsigned int i = 1; i < services.size(); i++)
+      services_joined.append(fmt::format(", \"{}\"", services[i]));
 
     help.append(fmt::format(
       "The \"services\" (sequence) is expected to provide an itemization of the service being tested\n"
       "for availability. Each service in the sequence is itself a (map).\n\n"
       "The format of service's (map) is as follows:\n"
-      " * type           (required) The type of service being tested. The type must be one of the\n"
-      "                             following supported types: {}.\n\n"
-      "                             Depending on the value of this parameter, additional sequence\n"
-      "                             options may be available. in this service's map section. What\n"
-      "                             follows are type-specific parameters.\n", 
+      " * type        (required) The type of service being tested. The type must be one of the\n"
+      "                          following supported types: {}.\n\n"
+      "                          Depending on the value of this parameter, additional sequence\n"
+      "                          options may be available. in this service's map section. What\n"
+      "                          follows are type-specific parameters.\n", 
       services_joined ));
 
     for (string service : services)
-      help.append(fmt::format( "\n For \"{}\" service types:\n{}", 
+      help.append(fmt::format( "\nFor \"{}\" service types:\n{}", 
         service,MonitorServiceFactory::getHelp(service) ));
 
-    help.append(
-      "\nFor more information about this program, see the github repo at:\n"
+    help.append("\n"
+      "The DATETIME format:\n"
+      "  This string format supports multiple descriptions of relative dates and times, for use\n"
+      "  in your configurations. Some examples include : \"Yesterday at 11:00a\", \"2 hours ago\"\n"
+      "  \"11:00 P, 2 days prior\", \"Today at 1:05 P\", and even\n"
+      "  \"2 days, 1 hour, 10 minutes back...\". All times are relative to \"now\", the time at.\n"
+      "  which the program is being run.\n"
+      "\n"
+      "The DURATION format:\n"
+      "  This string indicates a number of seconds, for use in your configurations. Some \n"
+      "  examples include: \"30 seconds\", \"2 hours\", \"20 days\", \"1 month\", and even \n"
+      "  \"3 weeks, 2 hours, 30 minutes, 10 seconds\".\n");
+
+    help.append("\n"
+      "For more information about this program, see the github repo at:\n"
       "  https://github.com/brighton36/property-services-monitor/\n" );
 
     cout << help; 

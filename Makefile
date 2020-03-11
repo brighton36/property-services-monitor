@@ -2,7 +2,7 @@ CXX ?= g++
 
 prefix ?= /usr/
 
-VERSION = 0.1
+VERSION = 0.2
 LIB_PATH = ./lib
 BUILD_PATH = build
 BIN_PATH = $(BUILD_PATH)/bin
