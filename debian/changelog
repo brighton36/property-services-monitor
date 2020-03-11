@@ -1,3 +1,10 @@
+propertyservicesmonitor (0.2-1) UNRELEASED; urgency=low
+
+  * Added Blue Iris Service module, with support for inclusion of alert images
+    in report email. 
+
+ -- Chris DeRose <chris@chrisderose.com>  Mon, 11 Mar 2020 15:00:10 -0500
+
 propertyservicesmonitor (0.1-1) UNRELEASED; urgency=low
 
   * Initial release. Closing Random Bug # to Pass lintian. (Closes: #123321)

@@ -57,7 +57,7 @@ unsigned int duration_to_seconds(string duration) {
 
 float percent_string_to_float(string input) {
 	smatch matches;
-  if (regex_search(input, matches, regex("([\\d\.]+)"))) return stof(matches[1]);
+  if (regex_search(input, matches, regex("([\\d\\.]+)"))) return stof(matches[1]);
   return 0.0f;
 }
 
