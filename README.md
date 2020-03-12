@@ -130,18 +130,45 @@ The "services" (sequence) is expected to provide an itemization of the service b
 for availability. Each service in the sequence is itself a (map).
 
 The format of service's (map) is as follows:
- * type           (required) The type of service being tested. The type must be one of the
-                             following supported types: "ping", "web".
+ * type        (required) The type of service being tested. The type must be one of the
+                          following supported types: "blueiris", "ping", "web".
 
-                             Depending on the value of this parameter, additional sequence
-                             options may be available. in this service's map section. What
-                             follows are type-specific parameters.
+                          Depending on the value of this parameter, additional sequence
+                          options may be available. in this service's map section. What
+                          follows are type-specific parameters.
 
- For "ping" service types:
+For "blueiris" service types:
+ * username         (required) A username for use in logging into the blue iris web service.
+ * password         (required) A password for use in logging into the blue iris web service.
+ * proto            (optional) Either "http" or "https". Defaults to "http".
+ * port             (optional) The port number of the http service. Defaults to 80 (http) or
+                             443 (https), depending on the proto value.
+ * capture_camera   (optional) Which camera(s) to capture alert images from, for inclusion
+                               in our report. Defaults to "Index" (Include All cameras).
+ * capture_from     (optional) A human readable DATETIME, indicating what time and day will
+                               start our alert image capturing. This is used to download
+                               and attach images to our report. See the notes on DATETIME
+                               formatting further below. Defaults to "11:00P the day before".
+ * capture_to       (optional) A human readable DATETIME, indicating what time and day will
+                               end our alert image capturing. This is used to download
+                               and attach images to our report. See the notes on DATETIME
+                               formatting further below. Defaults to "Today at 4:00A".
+ * max_warnings     (optional) Warnings are returned by the "status" command, to the 
+                               blue iris server. This is the count threshold, above which
+                               we trigger failure. Defaults to 0.
+ * min_uptime       (optional) The minimum acceptable system uptime for this server. This
+                               parameter is expected to be provided in the DURATION format.
+                               For more details on the DURATION format, see below. Defaults
+                               to "1 day".
+ * min_percent_free (optional) The minimum amount of space required on the system hard disk(s)
+                               in order to pass this check. This test is applied to every drive
+                               installed in the system. Defaults to "5%".
+
+For "ping" service types:
  * tries          (optional) The number of pings to attempt. Defaults to 5.
  * success_over   (optional) The number of pings, over which we are successful. Defaults to 4.
 
- For "web" service types:
+For "web" service types:
  * proto          (optional) Either "http" or "https". Defaults to "http".
  * port           (optional) The port number of the http service. Defaults to 80 (http) or
                              443 (https), depending on the proto value.
@@ -151,6 +178,18 @@ The format of service's (map) is as follows:
                              Defaults to 200.
  * ensure_match   (optional) A regular expression to be found in the return content body.
                              This regex is expected to be in the C++ regex format (no /'s).
+
+The DATETIME format:
+  This string format supports multiple descriptions of relative dates and times, for use
+  in your configurations. Some examples include : "Yesterday at 11:00a", "2 hours ago"
+  "11:00 P, 2 days prior", "Today at 1:05 P", and even
+  "2 days, 1 hour, 10 minutes back...". All times are relative to "now", the time at.
+  which the program is being run.
+
+The DURATION format:
+  This string indicates a number of seconds, for use in your configurations. Some 
+  examples include: "30 seconds", "2 hours", "20 days", "1 month", and even 
+  "3 weeks, 2 hours, 30 minutes, 10 seconds".
 
 For more information about this program, see the github repo at:
   https://github.com/brighton36/property-services-monitor/

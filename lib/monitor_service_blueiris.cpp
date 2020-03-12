@@ -22,11 +22,11 @@ std::string MonitorServiceBlueIris::Help() {
     " * capture_from     (optional) A human readable DATETIME, indicating what time and day will\n"
     "                               start our alert image capturing. This is used to download\n"
     "                               and attach images to our report. See the notes on DATETIME\n"
-    "                               formatting further below. Defaults to \"Yesterday\".\n"
+    "                               formatting further below. Defaults to \"11:00P the day before\".\n"
     " * capture_to       (optional) A human readable DATETIME, indicating what time and day will\n"
     "                               end our alert image capturing. This is used to download\n"
     "                               and attach images to our report. See the notes on DATETIME\n"
-    "                               formatting further below. Defaults to \"now\".\n"
+    "                               formatting further below. Defaults to \"Today at 4:00A\".\n"
     " * max_warnings     (optional) Warnings are returned by the \"status\" command, to the \n"
     "                               blue iris server. This is the count threshold, above which\n"
     "                               we trigger failure. Defaults to 0.\n"
@@ -44,7 +44,8 @@ MonitorServiceBlueIris::MonitorServiceBlueIris(string address, PTR_MAP_STR_STR p
   unsigned int port = 0;
   bool isSSL = false;
   session = string();
-  capture_from = "Yesterday";
+  capture_from = "11:00P the day before";
+  capture_to = "Today at 4:00A";
   capture_camera = "Index";
   min_percent_free = 5;
   max_warnings = 0;
