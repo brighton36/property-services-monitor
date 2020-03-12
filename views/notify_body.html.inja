@@ -55,8 +55,8 @@
       <div class="image-gallery pad-bottom">
       <ul>
       {% for image in service.results.images %}
-        <li><img width="{{mul(image.width, default(thumbnail_scale,0.25))}}" 
-          height="{{mul(image.height, default(thumbnail_scale,0.25))}}" 
+        <li><img width="{{mul(image.width, float(default(thumbnail_scale,"0.25")))}}" 
+          height="{{mul(image.height, float(default(thumbnail_scale,"0.25")))}}" 
           alt="{{image.alt}}" src="{{ image_src(image.src) }}" /></li>
       {% endfor %}
       </ul>
