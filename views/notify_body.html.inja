@@ -49,21 +49,23 @@
     </ul>
   {% endif %}
   {% if service.type == "blueiris" %}
-    {% if length(service.results.images) > 0 %}
-    <p class="pad-bottom">
-      The following alerts were captured, since our last run:
-      <div class="image-gallery pad-bottom">
-      <ul>
-      {% for image in service.results.images %}
-        <li><img width="{{mul(image.width, float(default(thumbnail_scale,"0.25")))}}" 
-          height="{{mul(image.height, float(default(thumbnail_scale,"0.25")))}}" 
-          alt="{{image.alt}}" src="{{ image_src(image.src) }}" /></li>
-      {% endfor %}
-      </ul>
-      </div>
-    </p>
-    {% else %}
-    <p class="pad-bottom">No alerts were captured, since our last run.
+    {% if existsIn(service.results, "images") %}
+      {% if length(service.results.images) > 0 %}
+      <p class="pad-bottom">
+        The following alerts were captured, since our last run:
+        <div class="image-gallery pad-bottom">
+        <ul>
+        {% for image in service.results.images %}
+          <li><img width="{{mul(image.width, float(default(thumbnail_scale,"0.25")))}}" 
+            height="{{mul(image.height, float(default(thumbnail_scale,"0.25")))}}" 
+            alt="{{image.alt}}" src="{{ image_src(image.src) }}" /></li>
+        {% endfor %}
+        </ul>
+        </div>
+      </p>
+      {% else %}
+      <p class="pad-bottom">No alerts were captured, since our last run.
+      {% endif %}
     {% endif %}
   {% endif %}
 {% endfor %}
