@@ -31,8 +31,7 @@ build() {
 
 package() {
   mkdir -p $pkgdir/usr/bin
-  chmod +s $startdir/build/bin/property-services-monitor
-  cp $startdir/build/bin/property-services-monitor $pkgdir/usr/sbin/
+  cp $startdir/build/bin/property-services-monitor $pkgdir/usr/bin/
   mkdir -p $pkgdir/usr/share/man/man1
   cp $startdir/build/bin/property-services-monitor.1.gz $pkgdir/usr/share/man/man1/
   mkdir -p $pkgdir/usr/share/property-services-monitor

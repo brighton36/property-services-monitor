@@ -28,11 +28,9 @@ RESULT_TUPLE MonitorServicePing::fetchResults() {
   auto [errors, results] = MonitorServiceBase::fetchResults();
 
   try {
-    // The port does not matter at all. Not sure why the library makes us set it.
-    auto socketAddress = Poco::Net::SocketAddress(address, "80");
+    auto client = Poco::Net::ICMPClient(Poco::Net::AddressFamily::IPv4);
 
-    unsigned int successful_pings = Poco::Net::ICMPClient::ping(
-      socketAddress, Poco::Net::IPAddress::IPv4, tries);
+    unsigned int successful_pings = client.ping(address, tries);
 
     (*results)["successful_pings"] = to_string(successful_pings);
 

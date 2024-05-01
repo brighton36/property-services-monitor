@@ -40,7 +40,7 @@ make && make install
 If you wish to create debian packages for additional architectures or further 
 deployment, a "make package-deb" target is included.
 
-## Debian Compilation / Packaging / install
+## Arch Compilation / Packaging / install
 If compiling on arch systems, the following packages are required:
 ```
 sudo pacman -Sy fmt poco yaml-cpp
@@ -163,6 +163,7 @@ For "blueiris" service types:
                                end our alert image capturing. This is used to download
                                and attach images to our report. See the notes on DATETIME
                                formatting further below. Defaults to "Today at 4:00A".
+ * ignore_warnings  (optional) Set to "1" to simply ignore warnings. Defaults to 0.
  * max_warnings     (optional) Warnings are returned by the "status" command, to the 
                                blue iris server. This is the count threshold, above which
                                we trigger failure. Defaults to 0.

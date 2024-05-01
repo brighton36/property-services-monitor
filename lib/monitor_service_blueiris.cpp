@@ -27,6 +27,7 @@ std::string MonitorServiceBlueIris::Help() {
     "                               end our alert image capturing. This is used to download\n"
     "                               and attach images to our report. See the notes on DATETIME\n"
     "                               formatting further below. Defaults to \"Today at 4:00A\".\n"
+    " * ignore_warnings  (optional) Set to \"1\" to simply ignore warnings. Defaults to 0.\n"
     " * max_warnings     (optional) Warnings are returned by the \"status\" command, to the \n"
     "                               blue iris server. This is the count threshold, above which\n"
     "                               we trigger failure. Defaults to 0.\n"
@@ -49,6 +50,7 @@ MonitorServiceBlueIris::MonitorServiceBlueIris(string address, PTR_MAP_STR_STR p
   capture_camera = "Index";
   min_percent_free = 5;
   max_warnings = 0;
+  ignore_warnings = 0;
   min_uptime = 24 * 60 * 60;
 
   setParameters({
@@ -68,6 +70,7 @@ MonitorServiceBlueIris::MonitorServiceBlueIris(string address, PTR_MAP_STR_STR p
     {"capture_to",      [&](string v)  { capture_to = v;}},
 
     {"max_warnings",     [&](string v) { max_warnings = stoi(v); }},
+    {"ignore_warnings",     [&](string v) { ignore_warnings = stoi(v); }},
     {"min_uptime",       [&](string v) { min_uptime = duration_to_seconds(v); }},
     {"min_percent_free", [&](string v) { 
       min_percent_free = percent_string_to_float(v); } },
@@ -272,9 +275,11 @@ RESULT_TUPLE MonitorServiceBlueIris::fetchResults() {
         err(errors, "Less than {0:.1f}% remaining on disk.", min_percent_free);
     }
 
-    unsigned int warnings = stoi(status["warnings"].get<string>());
-    if (warnings > max_warnings)
-      err(errors, "System log returned {} warnings", warnings);
+    if (!ignore_warnings) {
+      unsigned int warnings = stoi(status["warnings"].get<string>());
+      if (warnings > max_warnings)
+        err(errors, "System log returned {} warnings", warnings);
+    }
     
     if (uptime_to_seconds(status["uptime"]) < min_uptime)
       err(errors, 
