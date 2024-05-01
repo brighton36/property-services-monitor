@@ -72,11 +72,11 @@ nlohmann::json MonitorJob::toJson() {
   ret["has_failures"] = false;
   ret["hosts"] = nlohmann::json::array();
 
-  for (const auto host: hosts) {
+  for (const auto &host: hosts) {
     auto js_services = nlohmann::json::array();
     bool host_has_failures = false;
 
-    for(const auto service: host->services) {
+    for(const auto &service: host->services) {
       auto [errors, results] = service->fetchResults();
       bool is_up = errors->empty();
 

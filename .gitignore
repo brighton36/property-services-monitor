@@ -7,5 +7,7 @@ config*.yml
 TODO.txt
 build/*
 configs/*
+pkg/*
+*.zst
 
 property-services-monitor

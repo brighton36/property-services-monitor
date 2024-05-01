@@ -67,8 +67,8 @@ uninstall:
 	-rm -f $(DESTDIR)$(prefix)/bin/$(BIN_NAME)
 	-rm -rf $(DESTDIR)$(prefix)/share/$(BIN_NAME)
 
-.PHONY: package
-package:
+.PHONY: package-deb
+package-deb:
 	mkdir -p build/dpkg
 	tar --exclude-vcs --exclude="*.yml" --exclude="*.swp" --exclude "*.txt" \
 		--exclude "build" --transform "s,^.,$(BIN_NAME)," \

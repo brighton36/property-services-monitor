@@ -28,7 +28,7 @@ Once installed, the property-services-monitor is intended to be run via a schedu
 cronjob. There is one expected parameter, a yaml file path, with site configuration 
 details. 
 
-## Compilation
+## Debian Compilation / Packaging / install
 If compiling on Debian systems, the following packages are required:
 ```
 sudo apt install build-essential libfmt-dev libyaml-cpp-dev libpoco-dev nlohmann-json3-dev doctest-dev
@@ -38,7 +38,17 @@ Compilation is as simple as :
 make && make install
 ```
 If you wish to create debian packages for additional architectures or further 
-deployment, a "make package" target is included.
+deployment, a "make package-deb" target is included.
+
+## Debian Compilation / Packaging / install
+If compiling on arch systems, the following packages are required:
+```
+sudo pacman -Sy fmt poco yaml-cpp
+```
+Compilation, packaging, and  install is as simple as :
+```
+makepkg -si
+```
 
 ## Sample Config File
 Included in this repository is a (sample, minimal sample_config.yml)[sample_config.yml] for getting started.

@@ -15,7 +15,7 @@ std::string MonitorServiceWeb::Help() {
     "                             Defaults to {}.\n"
     " * ensure_match   (optional) A regular expression to be found in the return content body.\n"
     "                             This regex is expected to be in the C++ regex format (no /'s).\n", 
-    Poco::Net::HTTPResponse::HTTP_OK );
+    (int) Poco::Net::HTTPResponse::HTTP_OK );
 }
 
 MonitorServiceWeb::MonitorServiceWeb(string address, PTR_MAP_STR_STR params) 

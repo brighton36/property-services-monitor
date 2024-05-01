@@ -96,7 +96,7 @@ string MonitorServiceBlueIris::createTempDirectory() {
 
   ret = string(mkd_cstr);
 
-  delete mkd_cstr;
+  destroy_at(mkd_cstr);
 
   return ret;
 }

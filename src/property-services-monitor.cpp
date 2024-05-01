@@ -128,10 +128,10 @@ int main(int argc, char* argv[]) {
 
     for (auto& host : tmpl_data["hosts"].items()) {
       auto host_values = host.value();
-      fmt::print("  * Host: {} ({})\n", host_values["label"], host_values["address"]);
+      fmt::print("  * Host: {} ({})\n", (string) host_values["label"], (string) host_values["address"]);
       for (auto& service : host_values["services"].items()) {
         auto service_values = service.value();
-        fmt::print("    * {} : {}\n", service_values["type"], 
+        fmt::print("    * {} : {}\n", (string) service_values["type"], 
           (service_values["is_up"]) ? "OK" : "FAIL");
       }
     }
